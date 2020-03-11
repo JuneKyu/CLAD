@@ -1,0 +1,17 @@
+# git ignore file
+
+# don't care files
+__pycache__/*
+.ipynb_checkpoints/*
+
+# data files
+swat_data/*
+swat_lable.csv
+data/*
+
+# log files
+log/*
+
+# packages
+
+
