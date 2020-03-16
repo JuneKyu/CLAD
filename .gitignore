@@ -2,6 +2,9 @@
 
 # don't care files
 __pycache__/*
+util/__pycache__/*
+data_util/__pycache__/*
+model/__pycache__/*
 .ipynb_checkpoints/*
 
 # data files
