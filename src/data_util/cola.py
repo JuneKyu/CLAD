@@ -7,8 +7,7 @@ import zipfile
 import pandas as pd
 
 import config
-from data_util.BERT_embedding import preprocess_with_bert
-
+from data_util.embeddings import preprocess_with_avg_bert
 
 class CoLA_Dataset(object):
 
@@ -30,19 +29,16 @@ class CoLA_Dataset(object):
         self.test_y = None
 
     def preprocess(self):
+        which_embedding = confing.embedding
+        assert which_embedding in config.implemented_nlp_embeddings
 
-        self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y = \
-                                preprocess_with_bert(
-                                        dataset_name = 'cola',
-                                        train = self.train,
-                                        val = self.val,
-                                        test = self.test,
-                                        num_labels = config.CoLA_num_of_label,
-                                        MAX_LEN = config.MAX_LEN,
-                                        num_epochs = config.CoLA_fine_tune_epochs,
-                                        batch_size = config.CoLA_fine_tune_batch_size,
-                                        )
- 
+        if which_embedding == 'avg_glove':
+            print("not implemented yet")
+        elif which_embedding == 'avg_bert':
+            self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y = \
+                                    preprocess_with_avg_bert(self.train, self.val, self.test)
+        elif which_embedding == 's_bert':
+            print("not implemented yet") 
        
     def get_dataset(self):
         return self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y

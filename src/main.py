@@ -111,6 +111,10 @@ def main():
     print("")
     print("dataset loading successful!")
     log.info('dataset loading successful') 
+
+    
+    pdb.set_trace()
+
     #  train_x_swat, train_y_swat, val_x_swat, val_y_swat, test_x_swat, test_y_swat, _ = SWaT_dataset(data_path = swat_dic['data_path'], read_size = args.read_size)
 
     #  train_x_swat_freq = get_freq_data_2(data = train_x_swat,
