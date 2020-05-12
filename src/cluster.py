@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- codeing: utf-8 -*-
+
 from sklearn.cluster import *
 from sklearn.mixture import *
 
@@ -15,11 +18,10 @@ def make_arg_cluster(dict_):
     return str_
 
 
-
-# 클러스터 함수를 통해 나오는 아웃풋 : 인풋 데이터와 그 인풋 데이터가 클러스터로 라벨링 된 값.
+# output from the clustering func : input data and values that are labeled with each cluster class
 def KMeans_clustering(**kwargs):
 #     TODO
-# cluster_args 에서 다양한 아규먼트중 해당 모델에 맞게 맞춰야 할듯? 
+# need to fit the cluster_args for each specific models
 
     model = KMeans(n_clusters=kwargs['n_clusters'])
     model.fit(kwargs['train_x'])
@@ -46,7 +48,7 @@ def MeanShift_clustering(**kwargs):
 
 def DBSCAN_clustering(**kwargs):
     model = DBSCAN(eps = kwargs['eps'], min_samples = kwargs['min_samples'])
-#     질문?
+#     Q?
 #     core_samples_mask = np.zeros_like(cluster_model.labels_, dtype=bool)
 #     core_samples_mask[cluster_model.core_sample_indices_] = True
 

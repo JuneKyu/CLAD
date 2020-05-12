@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 import wget
 import os
 import zipfile
 
 import pandas as pd
+from torch.utils.data import TensorDataset
 
 import config
-from data_util.embeddings import preprocess_with_avg_bert
+from .embeddings import preprocess_with_avg_bert
+from .embeddings import preprocess_with_s_bert
+
+import pdb
 
 class CoLA_Dataset(object):
 
@@ -29,8 +34,11 @@ class CoLA_Dataset(object):
         self.test_y = None
 
     def preprocess(self):
-        which_embedding = confing.embedding
+
+        which_embedding = config.embedding
         assert which_embedding in config.implemented_nlp_embeddings
+
+        print("embedding with {} embedding".format(which_embedding))
 
         if which_embedding == 'avg_glove':
             print("not implemented yet")
@@ -38,10 +46,18 @@ class CoLA_Dataset(object):
             self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y = \
                                     preprocess_with_avg_bert(self.train, self.val, self.test)
         elif which_embedding == 's_bert':
-            print("not implemented yet") 
+            self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y = \
+                                    preprocess_with_s_bert(self.train, self.val, self.test)
        
     def get_dataset(self):
-        return self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y
+        
+        train = TensorDataset(self.train_x, self.train_y)
+        val = TensorDataset(self.val_x, self.val_y)
+        test = TensorDataset(self.test_x, self.test_y)
+
+        self.dataset = {"train": train, "val": val, "test": test}
+
+        return self.dataset
 
 
 def cola_dataset(directory = '../data'):
@@ -57,7 +73,10 @@ def cola_dataset(directory = '../data'):
 
     cola_train_data_path = os.path.join(cola_data_path, "raw/in_domain_train.tsv")
     train = pd.read_csv(cola_train_data_path, delimiter='\t', header=None, names=['sentence_source', 'label', 'label_notes', 'sentence'])
-    
+   
+    # extract only normal cases for the cola sentences
+    train = train[train.label != 0]
+
     cola_val_data_path = os.path.join(cola_data_path, "raw/in_domain_dev.tsv")
     val = pd.read_csv(cola_val_data_path, delimiter='\t', header=None, names=['sentence_source', 'label', 'label_notes', 'sentence'])
 

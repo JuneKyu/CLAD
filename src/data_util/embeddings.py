@@ -9,6 +9,9 @@ from transformers import BertTokenizer
 from transformers import BertModel
 #  from keras_preprocessing.sequence import pad_sequences
 
+from sentence_transformers import SentenceTransformer
+
+
 from config import device
 import config
 
@@ -24,6 +27,8 @@ import pdb
 #      pdb.set_trace()
 #      tokenized_sentences = torch.stack(tokenized_sentences,1)
 #      return tokenized_sentences
+
+        
 
 def avg_bert_embed(sentences):
     embedding_model = BertModel.from_pretrained('bert-base-uncased')
@@ -49,25 +54,43 @@ def avg_bert_embed(sentences):
                 avg_bert[index] += token[index].item()
             avg_bert[index] = avg_bert[index]/num_tokens
 
-        embeddings.append(avg_bert)
+        # add as a numpy array
+        embeddings.append(avg_bert.cpu().numpy())
 
     return embeddings
 
+def sentence_bert_embed(sentences):
+
+    model = SentenceTransformer('bert-base-nli-mean-tokens')
+    sentence_embeddings = model.encode(sentences)
+    
+    return sentence_embeddings
+
+
 #  def preprocess_with_avg_glove()
+
 
 def preprocess_with_avg_bert(train, val, test):
 
-    train_x = avg_bert_embed(train.sentence.values)
-    train_y = train.label.values
-    val_x = avg_bert_embed(val.sentences.values)
-    val_y = val.label.values
-    test_x = avg_bert_embed(test.sentence.values)
-    test_y = test.label.values
-
+    train_x = torch.tensor(avg_bert_embed(train.sentence.values))
+    train_y = torch.tensor(train.label.values)
+    val_x = torch.tensor(avg_bert_embed(val.sentence.values))
+    val_y = torch.tensor(val.label.values)
+    test_x = torch.tensor(avg_bert_embed(test.sentence.values))
+    test_y = torch.tensor(test.label.values)
+    
     return train_x, train_y, val_x, val_y, test_x, test_y
 
-#  def preprocess_with_s_bert():
+def preprocess_with_s_bert(train, val, test):
 
+    #  pdb.set_trace()
+    train_x = torch.tensor(sentence_bert_embed(train.sentence.values))
+    train_y = torch.tensor(train.label.values)
+    val_x = torch.tensor(sentence_bert_embed(val.sentence.values))
+    val_y = torch.tensor(val.label.values)
+    test_x = torch.tensor(sentence_bert_embed(test.sentence.values))
+    test_y = torch.tensor(test.label.values)
     
+    return train_x, train_y, val_x, val_y, test_x, test_y
 
 

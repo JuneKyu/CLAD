@@ -23,11 +23,27 @@ folder_path = '../../log/' + today
 
 
 implemented_datasets = ('swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb')
-implemented_nlp_embeddings = ('avg_bert')
+implemented_nlp_embeddings = ('avg_bert', 's_bert') # need to implement more...
+implemented_cluster_models = ('gmm') # need to implement more...
+implemented_classifier_models = ('knn', 'svm') # need to implement more...
 
 
 # data specific configuration
-embedding = 'avg_bert'
+embedding = 's_bert'
+# avg_glove, avg_bert, s_bert,... 
+
+
+# cluster specific configuration
+gmm_type = 'tied'
+#  gmm_n_clusters = 5 # cluster the data into 5 different clusters
+
+
+# classifier specific configuration
+svm_gamma = 0.1
+svm_C = 1000
+
+knn_n_neighbors = 10
+
 
 # lr = 0.001
 

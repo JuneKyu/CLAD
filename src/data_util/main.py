@@ -3,7 +3,7 @@
 
 import os
 
-from data_util.cola import CoLA_Dataset
+from .cola import CoLA_Dataset
 from config import implemented_datasets
 
 
