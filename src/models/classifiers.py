@@ -3,6 +3,9 @@
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import svm
+import numpy as np
+
+np.random.seed(777)
 
 # KNN
 def KNN_classifier(n_neighbors, train_data, train_label):

@@ -15,6 +15,8 @@ import config
 
 import pdb
 
+np.random.seed(777)
+
 class Model(object):
 
     """
@@ -111,17 +113,16 @@ class Model(object):
 
             pred_test = classifier.predict(self.test_x)
             test_predict_list.append(pred_test)
+       
 
-        #  pdb.set_trace()
+        best_f1 = 0
+        best_combi = None
+        best_threshold = 0
 
         # find best cluster sets for every combinations
         for combi_num in range(2, self.cluster_num + 1): # ex : 2, 3, 4, 5
             #combi_num : the number of clusters set into one
             
-            best_f1 = 0
-            best_combi = None
-            best_threshold = 0
-
             data_combi_list = list(combinations(test_predict_list, combi_num))
             combi_list = list(combinations(np.arange(self.cluster_num), combi_num))
             
@@ -132,11 +133,11 @@ class Model(object):
                     data_predict += data_combi_list[combi_][i]
 
                 # set threshold as j (up to the number of clusters)
-                for j in range(1, len(data_combi_list[combi_])):
+                #  for j in range(1, len(data_combi_list[combi_]) - 1):
+                for j in range(1, len(data_combi_list[combi_])): # TODO
                     
-                    threshold_pred = [0 if pred < j else 1 for pred in data_predict]
-                    
-                    f1 = f1_score(self.test_y, threshold_pred)
+                    f1 = f1_score(self.test_y, (data_predict < j).astype(int))
+
                     if f1 > best_f1:
                         best_f1 = f1
                         best_combi = combi_list[combi_]

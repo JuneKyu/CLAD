@@ -22,7 +22,7 @@ class CoLA_Dataset(object):
 
         self._root_dir = root_dir
         self.train, self.val, self.test = cola_dataset(root_dir)
-        self.input_ids = []
+        #  self.input_ids = []
 
         self.train_x = None
         self.train_y = None
@@ -55,14 +55,14 @@ class CoLA_Dataset(object):
         val = TensorDataset(self.val_x, self.val_y)
         test = TensorDataset(self.test_x, self.test_y)
 
-        self.dataset = {"train": train, "val": val, "test": test}
+        dataset = {"train": train, "val": val, "test": test}
 
-        return self.dataset
+        return dataset
 
 
 def cola_dataset(directory = '../data'):
     
-    cola_data_path = os.path.join(directory,'cola_public')
+    cola_data_path = os.path.join(directory, 'cola_public')
 
     if not os.path.exists(cola_data_path):
         print("Downloading CoLA dataset...")
