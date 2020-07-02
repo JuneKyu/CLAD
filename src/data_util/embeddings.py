@@ -11,7 +11,6 @@ from transformers import BertModel
 
 from sentence_transformers import SentenceTransformer
 
-
 from config import device
 import config
 
@@ -28,42 +27,45 @@ import pdb
 #      tokenized_sentences = torch.stack(tokenized_sentences,1)
 #      return tokenized_sentences
 
-        
 
 def avg_bert_embed(sentences):
     embedding_model = BertModel.from_pretrained('bert-base-uncased')
     embeddings = []
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case = True)
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased',
+                                              do_lower_case=True)
 
     for i, sent in enumerate(sentences):
 
-        if (i+1) % 100 == 0:
-            print("embedding " + str(i+1) + " out of " + str(len(sentences)))
+        if (i + 1) % 100 == 0:
+            print("embedding " + str(i + 1) + " out of " + str(len(sentences)))
 
         tokens = tokenizer.encode(sent)
         tokens = torch.tensor(tokens).unsqueeze(0).to(device)
         embedding_model.cuda()
-        bert_embeddings = embedding_model(tokens)[0][0] # get the embedding from the pretrained bert model
+        bert_embeddings = embedding_model(tokens)[0][
+            0]  # get the embedding from the pretrained bert model
 
         num_tokens = len(bert_embeddings)
         embedding_size = len(bert_embeddings[0])
-        avg_bert = torch.zeros([embedding_size], dtype=torch.float64).to(device)
+        avg_bert = torch.zeros([embedding_size],
+                               dtype=torch.float64).to(device)
 
         for index in range(embedding_size):
             for token in bert_embeddings:
                 avg_bert[index] += token[index].item()
-            avg_bert[index] = avg_bert[index]/num_tokens
+            avg_bert[index] = avg_bert[index] / num_tokens
 
         # add as a numpy array
         embeddings.append(avg_bert.cpu().numpy())
 
     return embeddings
 
+
 def sentence_bert_embed(sentences):
 
     model = SentenceTransformer('bert-base-nli-mean-tokens')
     sentence_embeddings = model.encode(sentences)
-    
+
     return sentence_embeddings
 
 
@@ -78,8 +80,9 @@ def preprocess_with_avg_bert(train, val, test):
     val_y = torch.tensor(val.label.values)
     test_x = torch.tensor(avg_bert_embed(test.sentence.values))
     test_y = torch.tensor(test.label.values)
-    
+
     return train_x, train_y, val_x, val_y, test_x, test_y
+
 
 def preprocess_with_s_bert(train, val, test):
 
@@ -90,7 +93,5 @@ def preprocess_with_s_bert(train, val, test):
     val_y = torch.tensor(val.label.values)
     test_x = torch.tensor(sentence_bert_embed(test.sentence.values))
     test_y = torch.tensor(test.label.values)
-    
+
     return train_x, train_y, val_x, val_y, test_x, test_y
-
-
