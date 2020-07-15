@@ -40,23 +40,22 @@ class dec_module():
             [self.input_dim, 500, 500, 2000, self.n_components],
             final_activation=None)
         #  autoencoder = StackedDenoisingAutoEncoder([28 * 28, 500, 500, 2000, 10], final_activation=None)
-
+        
         if self.cuda:
             autoencoder.cuda()
         print('Pretraining stage.')
-        pdb.set_trace()
         if config.set_dec_lower_learning_rate:
             ae.pretrain(
                 self.ds_train,
                 autoencoder,
                 cuda=self.cuda,
                 validation=self.ds_val,
-                epochs=config.dec_pretrain_epochs,
+                epochs=config.lower_dec_pretrain_epochs,
                 batch_size=config.dec_batch_size,
                 optimizer=lambda model: SGD(model.parameters(),
-                                            lr=config.lower_lr,
-                                            momentum=config.lower_momentum),
-                scheduler=lambda x: StepLR(x, 100, gamma=0.1),
+                                            lr=config.lower_lr, # 0.01
+                                            momentum=config.lower_momentum), # 0.6
+                scheduler=lambda x: StepLR(x, 200, gamma=0.1),
                 corruption=0.2)
         else:
             ae.pretrain(self.ds_train,
@@ -70,9 +69,14 @@ class dec_module():
                         scheduler=lambda x: StepLR(x, 100, gamma=0.1),
                         corruption=0.2)
         print('Training stage.')
-        ae_optimizer = SGD(params=autoencoder.parameters(),
-                           lr=0.1,
-                           momentum=0.9)
+        if config.set_dec_lower_learning_rate:
+            ae_optimizer = SGD(params=autoencoder.parameters(),
+                               lr=config.lower_lr_train, # 0.001
+                               momentum=config.lower_momentum) # 0.9
+        else :
+            ae_optimizer = SGD(params=autoencoder.parameters(),
+                               lr=0.1,
+                               momentum=0.9)
         ae.train(self.ds_train,
                  autoencoder,
                  cuda=self.cuda,
@@ -82,6 +86,7 @@ class dec_module():
                  optimizer=ae_optimizer,
                  scheduler=StepLR(ae_optimizer, 100, gamma=0.1),
                  corruption=0.2)
+
         print('DEC stage.')
         self.model = DEC(cluster_number=self.n_components,
                          hidden_dimension=self.n_components,

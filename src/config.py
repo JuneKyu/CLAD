@@ -1,9 +1,8 @@
 """
 configuration setting for etri_2019
 """
-
-import logging
 import datetime
+import logging
 
 import torch
 
@@ -69,12 +68,15 @@ gmm_type = 'tied'
 
 # deep embedding clustering
 dec_pretrain_epochs = 300
+lower_dec_pretrain_epochs = 200
 dec_finetune_epochs = 500
 dec_batch_size = 256
 
 set_dec_lower_learning_rate = False
-lower_lr = 0.01
+lower_lr = 1e-2
+lower_lr_train = 1e-3
 lower_momentum = 0.6
+lower_momentum_train = 0.6
 
 # -------------------------------
 # classifier configuration

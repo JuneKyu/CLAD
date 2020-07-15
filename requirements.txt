@@ -1,1 +1,14 @@
 pip install sentence-transformers
+pip install pandas
+pip install wget
+pip install pytorch-nlp
+
+ptdae install:
+git clone https://github.com/vlukiyanov/pt-sdae.git
+cd ptdae
+python setup.py install
+
+ptdec install:
+git clone https://github.com/vlukiyanov/pt-dec.git
+cd pt-dec
+python setup.py install
