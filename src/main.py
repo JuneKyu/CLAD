@@ -26,6 +26,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='../data')
     parser.add_argument('--dataset_name', type=str, default='swat')
+    parser.add_argument('--sentence_embedding',
+                        type=str,
+                        default='sentence_embedding')
     parser.add_argument('--normal_class_index', type=int, default='0')
     parser.add_argument('--cluster_num', type=int, default=5)
     parser.add_argument('--cluster_type', type=str, default='gmm')
@@ -44,6 +47,8 @@ def main():
     data_path = args.data_path
     # data_name
     dataset_name = args.dataset_name
+    # if text data, set sentence embedding
+    config.sentence_embedding = args.sentence_embedding
 
     # logger
     log = config.logger

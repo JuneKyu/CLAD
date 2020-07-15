@@ -7,7 +7,7 @@ from .cluster_models import GaussianMixture_clustering, DeepEmbedding_clustering
 from .classifiers import KNN_classifier, SVM_classifier
 from config import implemented_cluster_models, implemented_classifier_models
 
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 from itertools import combinations
 
@@ -122,8 +122,11 @@ class Model(object):
             test_predict_list.append(pred_test)
 
         best_f1 = 0
-        best_combi = None
-        best_threshold = 0
+        best_auc = 0
+        best_combi_f1 = None
+        best_combi_auc = None
+        best_threshold_f1 = 0
+        best_threshold_auc = 0
 
         # find best cluster sets for every combinations
         for combi_num in range(2, self.cluster_num + 1):  # ex : 2, 3, 4, 5
@@ -144,11 +147,18 @@ class Model(object):
                 for j in range(1, len(data_combi_list[combi_])):  # TODO
 
                     f1 = f1_score(self.test_y, (data_predict < j).astype(int))
+                    auc = roc_auc_score(self.test_y,
+                                        (data_predict < j).astype(int))
 
                     if f1 > best_f1:
                         best_f1 = f1
-                        best_combi = combi_list[combi_]
-                        best_threshold = j
+                        best_combi_f1 = combi_list[combi_]
+                        best_threshold_f1 = j
+
+                    if auc > best_auc:
+                        best_auc = auc
+                        best_combi_auc = combi_list[combi_]
+                        best_threshold_auc = j
 
                     print(
                         "cluster_num - {}, combination - {}, f1 - {:.4f}, threshold - {}"
@@ -156,10 +166,22 @@ class Model(object):
                     log.info(
                         "cluster_num - {}, combination - {}, f1 - {:.4f}, threshold - {}"
                         .format(self.cluster_num, combi_list[combi_], f1, j))
+                    print(
+                        "cluster_num - {}, combination - {}, auc - {:.4f}, threshold - {}"
+                        .format(self.cluster_num, combi_list[combi_], auc, j))
+                    log.info(
+                        "cluster_nim - {}, combination - {}, auc - {:.4f}, threshold - {}"
+                        .format(self.cluster_num, combi_list[combi_], auc, j))
 
         print("best f1 score : {:.4f}".format(best_f1))
         log.info("best f1 score : {:.4f}".format(best_f1))
-        print("best combi = {}".format(best_combi))
-        log.info("best combi = {}".format(best_combi))
-        print("best_threshold : {}".format(best_threshold))
-        log.info("best_threshold : {}".format(best_threshold))
+        print("best auc score : {:.4f}".format(best_auc))
+        log.info("best auc score : {:.4f}".format(best_auc))
+        print("best f1 combi = {}".format(best_combi_f1))
+        log.info("best f1 combi = {}".format(best_combi_f1))
+        print("best auc combi = {}".format(best_combi_auc))
+        log.info("best auc combi = {}".format(best_combi_auc))
+        print("best f1 threshold : {}".format(best_threshold_f1))
+        log.info("best f1 threshold : {}".format(best_threshold_f1))
+        print("best auc threshold : {}".format(best_threshold_auc))
+        log.info("best auc threshold : {}".format(best_threshold_auc))
