@@ -2,6 +2,7 @@ pip install sentence-transformers
 pip install pandas
 pip install wget
 pip install pytorch-nlp
+pip install torchvision
 
 ptdae install:
 git clone https://github.com/vlukiyanov/pt-sdae.git

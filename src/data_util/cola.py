@@ -70,6 +70,7 @@ def cola_dataset(directory='../data'):
         cola_zip = zipfile.ZipFile(
             os.path.join(cola_data_path, 'cola_public_1.1.zip'))
         cola_zip.extractall(cola_data_path)
+        os.remove(os.path.join(cola_data_path, 'cola_public_1.1.zip'))
 
     cola_train_data_path = os.path.join(cola_data_path,
                                         "raw/in_domain_train.tsv")

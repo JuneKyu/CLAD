@@ -72,26 +72,26 @@ def sentence_bert_embed(sentences):
 #  def preprocess_with_avg_glove()
 
 
-def preprocess_with_avg_bert(train, val, test):
+def preprocess_with_avg_bert(train, test):
 
-    train_x = torch.tensor(avg_bert_embed(train.sentence.values))
-    train_y = torch.tensor(train.label.values)
-    val_x = torch.tensor(avg_bert_embed(val.sentence.values))
-    val_y = torch.tensor(val.label.values)
-    test_x = torch.tensor(avg_bert_embed(test.sentence.values))
-    test_y = torch.tensor(test.label.values)
+    train_x = avg_bert_embed(train.sentence.values)
+    train_y = train.label.values
+    #  val_x = torch.tensor(avg_bert_embed(val.sentence.values))
+    #  val_y = torch.tensor(val.label.values)
+    test_x = avg_bert_embed(test.sentence.values)
+    test_y = test.label.values
 
-    return train_x, train_y, val_x, val_y, test_x, test_y
+    return train_x, train_y, test_x, test_y
 
 
-def preprocess_with_s_bert(train, val, test):
+def preprocess_with_s_bert(train, test):
 
     #  pdb.set_trace()
-    train_x = torch.tensor(sentence_bert_embed(train.sentence.values))
-    train_y = torch.tensor(train.label.values)
-    val_x = torch.tensor(sentence_bert_embed(val.sentence.values))
-    val_y = torch.tensor(val.label.values)
-    test_x = torch.tensor(sentence_bert_embed(test.sentence.values))
-    test_y = torch.tensor(test.label.values)
+    train_x = sentence_bert_embed(train.sentence.values)
+    train_y = train.label.values
+    #  val_x = torch.tensor(sentence_bert_embed(val.sentence.values))
+    #  val_y = torch.tensor(val.label.values)
+    test_x = sentence_bert_embed(test.sentence.values)
+    test_y = test.label.values
 
-    return train_x, train_y, val_x, val_y, test_x, test_y
+    return train_x, train_y, test_x, test_y

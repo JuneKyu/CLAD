@@ -29,11 +29,12 @@ def main():
     parser.add_argument('--sentence_embedding',
                         type=str,
                         default='sentence_embedding')
-    parser.add_argument('--normal_class_index', type=int, default='0')
+    parser.add_argument('--normal_class_index_list', nargs='+',
+                        default=[0])  # get a list of normal class indexes
     parser.add_argument('--cluster_num', type=int, default=5)
     parser.add_argument('--cluster_type', type=str, default='gmm')
     parser.add_argument('--classifier_type', type=str, default='svm')
-    parser.add_argument('--use_noise_labeling', type=bool, default='True')
+    #  parser.add_argument('--use_noise_labeling', type=bool, default='True')
     # dataset_name : 'swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb'
 
     args = parser.parse_args()
@@ -41,7 +42,9 @@ def main():
     cluster_num = args.cluster_num
     cluster_type = args.cluster_type
     classifier_type = args.classifier_type
-    normal_class_index = args.normal_class_index
+    normal_class_index_list = args.normal_class_index_list
+    normal_class_index_list = [int(i) for i in normal_class_index_list]
+    config.normal_class_index_list = normal_class_index_list
 
     # data_path
     data_path = args.data_path
@@ -77,27 +80,26 @@ def main():
 
     print("dataset name : " + dataset_name)
     log.info("dataset name : " + dataset_name)
-    if dataset_name in ("reuters"):
-        print("normal_class_index : {}".format(normal_class_index))
-        log.info("normal_class_index : {}".format(normal_class_index))
 
-    if (dataset_name in ("swat")) and (cluster_type in ("dec")):
-        config.set_dec_lower_learning_rate = True
+    # data specific parameter configurations
+    #  if (dataset_name in ("swat")) and (cluster_type in ("dec")):
+    #      config.set_dec_lower_learning_rate = True
+
+    print("normal_class_index_list : {}".format(normal_class_index_list))
+    log.info("normal_class_index_list : {}".format(normal_class_index_list))
 
     # loading dataset
-    dataset = load_dataset(dataset_name=dataset_name,
-                           data_path=data_path,
-                           normal_class_index=normal_class_index)
+    dataset = load_dataset(dataset_name=dataset_name, data_path=data_path)
 
     print("")
     print("dataset loading successful!")
     log.info("dataset loading successful")
 
-    model = Model(dataset=dataset,
+    model = Model(dataset_name=dataset_name,
+                  dataset=dataset,
                   cluster_num=cluster_num,
                   cluster_type=cluster_type,
-                  classifier_type=classifier_type,
-                  use_noise_labeling=args.use_noise_labeling)
+                  classifier_type=classifier_type)
 
     print("clustering...")
     log.info("clustering...")
@@ -105,7 +107,8 @@ def main():
 
     print("classifing...")
     log.info("classifing...")
-    model.classify()
+    #  model.classify_naive()
+    model.classify_nn(dataset_name)
 
     log.info("-" * 30)
     log.info("-" * 30)

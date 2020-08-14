@@ -1,18 +1,15 @@
-#!/usr/bin/env python3
-# -*- codeing: utf-8 -*-
-
-import numpy as np
-
 from .cluster_models import GaussianMixture_clustering, DeepEmbedding_clustering
-from .classifiers import KNN_classifier, SVM_classifier
+from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier
 from config import implemented_cluster_models, implemented_classifier_models
-
-from sklearn.metrics import f1_score, roc_auc_score
-
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from itertools import combinations
 
-import config
+from .odin import apply_odin
+from .metric import calculate_metric
 
+import os
+import numpy as np
+import config
 import pdb
 
 np.random.seed(777)
@@ -25,66 +22,165 @@ class Model(object):
     self.test_pred_label =
     self.cluster_model =
     """
-    def __init__(self, dataset, cluster_num, cluster_type, classifier_type,
-                 use_noise_labeling):
+    def __init__(self, dataset_name, dataset, cluster_num, cluster_type,
+                 classifier_type):
         """TODO: to be defined. """
 
+        self.dataset_name = dataset_name
         self.train_x = dataset["train"][:][0]
-        self.val_x = dataset["val"][:][0]
-        self.test_x = dataset["test"][:][0]
         self.train_y = dataset["train"][:][1]
-        self.val_y = dataset["val"][:][1]
-        self.test_y = dataset["test"][:][1]
+        self.test_in_x = dataset["test_in"][:][0]
+        self.test_in_y = dataset["test_in"][:][1]
+        self.test_out_x = dataset["test_out"][:][0]
+        self.test_out_y = dataset["test_out"][:][1]
 
         # cluster variables
         self.cluster_num = cluster_num
         self.cluster_type = cluster_type
         self.train_clusters = []
-        self.val_clusters = []
-        self.test_clusters = []
         self.cluster_model = None
 
         # classifier variables
         self.classifier_type = classifier_type
-
-        #  self.use_noise_labeling = use_noise_labeling
 
         assert cluster_type in implemented_cluster_models
         assert classifier_type in implemented_classifier_models
 
     def cluster(self):
         """
+        clustering module of the model
         """
 
-        #  print("clustering...")
-
         if self.cluster_type == 'gmm':  # gaussian mixture model
-            self.train_clusters, self.val_clusters, self.test_clusters, self.cluster_model = \
-                GaussianMixture_clustering(
-                    train_x=self.train_x,
-                    val_x=self.val_x,
-                    test_x=self.test_x,
-                    n_components=self.cluster_num,
-                    covariance_type=config.gmm_type)
+            print("not modified to new code")
+            #  self.train_clusters, self.val_clusters, self.test_clusters, self.cluster_model = \
+            #  GaussianMixture_clustering(
+            #      train_x=self.train_x,
+            #      val_x=self.val_x,
+            #      test_x=self.test_x,
+            #      n_components=self.cluster_num,
+            #      covariance_type=config.gmm_type)
 
         elif self.cluster_type == 'dec':  # deep embedding clustering
-            self.train_clusters, self.val_clusters, self.test_clusters, self.cluster_model = \
+            if (self.dataset_name == 'mnist'):
+                # use dec default configuration
+                print("")
+            elif (self.dataset_name == 'reuters'):
+                config.dec_finetune_epochs = config.reuters_dec_finetune_epochs
+                config.dec_finetune_lr = config.reuters_dec_finetune_lr
+                config.dec_finetune_decay_step = config.reuters_dec_finetune_decay_step
+                config.dec_finetune_decay_rate = config.reuters_dec_finetune_decay_rate
+                config.dec_train_epoch = config.reuters_dec_train_epoch
+            self.train_clusters, self.cluster_model = \
                 DeepEmbedding_clustering(
                     train_x=self.train_x,
                     train_y=self.train_y,
-                    val_x=self.val_x,
-                    val_y=self.val_y,
-                    test_x=self.test_x,
-                    test_y=self.test_y,
+                    #  val_x=self.val_x,
+                    #  val_y=self.val_y,
+                    #  test_x=self.test_x,
+                    #  test_y=self.test_y,
                     n_components=self.cluster_num)
 
-    def classify(self):  # classify with cluster model
+            #  if os.path.exists(config.temp_dec_cluster):
+            #      #  print("use preprocessed dec specs for mnist")
+            #      self.train_clusters = np.load(
+            #          os.path.join(config.temp_dec_cluster,
+            #                       "train_clusters.npy"))
+            #      self.val_clusters = np.load(
+            #          os.path.join(config.temp_dec_cluster, "val_clusters.npy"))
+            #      self.test_clusters = np.load(
+            #          os.path.join(config.temp_dec_cluster, "test_clusters.npy"))
+            #  else:
+            #      os.makedirs(config.temp_dec_cluster)
+            #      self.train_clusters, self.val_clusters, self.test_clusters, self.cluster_model = \
+            #          DeepEmbedding_clustering(
+            #              train_x=self.train_x,
+            #              train_y=self.train_y,
+            #              val_x=self.val_x,
+            #              val_y=self.val_y,
+            #              test_x=self.test_x,
+            #              test_y=self.test_y,
+            #              n_components=self.cluster_num)
+            #      np.save(
+            #          os.path.join(config.temp_dec_cluster, "train_clusters"),
+            #          self.train_clusters)
+            #      np.save(os.path.join(config.temp_dec_cluster, "val_clusters"),
+            #              self.val_clusters)
+            #      np.save(os.path.join(config.temp_dec_cluster, "test_clusters"),
+            #              self.test_clusters)
+
+    # classify with cluster models using neural network models
+    def classify_nn(self, dataset_name):
+
+        log = config.logger
+        if dataset_name in config.cps_datasets:
+            print("not implemented")
+        elif dataset_name in config.text_datasets:
+            print("")
+
+            classifier = Linear_classifier(self.train_x,
+                                           self.train_clusters,
+                                           n_epochs=5000,
+                                           lr=0.001)
+            train_pred = classifier.predict(self.train_x.cuda(config.device))
+            train_accuracy = accuracy_score(train_pred, self.train_clusters)
+
+            print(
+                "NN Classifier training accuracu : {}".format(train_accuracy))
+            log.info(
+                "NN Classifier training accuracy = {}".format(train_accuracy))
+            apply_odin(classifier, self.test_in_x, self.test_out_x)
+            calculate_metric("mnist")
+            #  calculate_metric("reuters")
+
+            #  train_pred = classifier(self.)
+            #  classifier = WideResNet_classifier()
+            #  classifier = GRU_text_classifier(self.train_x, self.train_clusters,
+            #  self.test_x, self.test_clusters)
+        elif dataset_name in config.image_datasets:
+            classifier = Linear_classifier(self.train_x,
+                                           self.train_clusters,
+                                           n_epochs=5000,
+                                           lr=0.001)
+            train_pred = classifier.predict(self.train_x.cuda(config.device))
+            train_accuracy = accuracy_score(train_pred, self.train_clusters)
+
+            print(
+                "NN Classifier training accuracy : {}".format(train_accuracy))
+            log.info(
+                "NN Classifier training accuracy = {}".format(train_accuracy))
+
+            apply_odin(classifier, self.test_in_x, self.test_out_x)
+            calculate_metric("mnist")
+
+
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+
+    def classify_naive(
+            self):  # classify with cluster model using naive ML models
 
         log = config.logger
 
         test_predict_list = []
 
-        #  pdb.set_trace()
         # binary classification -> set one cluster as normal for each rounds of loop
         for cluster_index in range(len(np.unique(self.train_clusters))):
 
@@ -170,7 +266,7 @@ class Model(object):
                         "cluster_num - {}, combination - {}, auc - {:.4f}, threshold - {}"
                         .format(self.cluster_num, combi_list[combi_], auc, j))
                     log.info(
-                        "cluster_nim - {}, combination - {}, auc - {:.4f}, threshold - {}"
+                        "cluster_num - {}, combination - {}, auc - {:.4f}, threshold - {}"
                         .format(self.cluster_num, combi_list[combi_], auc, j))
 
         print("best f1 score : {:.4f}".format(best_f1))

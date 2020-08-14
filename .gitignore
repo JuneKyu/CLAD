@@ -15,8 +15,10 @@ swat_data/*
 swat_lable.csv
 data/*
 
+
 # log files
 log/*
+src/softmax_scores/*
 
 # packages
 

@@ -3,7 +3,6 @@ configuration setting for etri_2019
 """
 import datetime
 import logging
-import os
 
 import torch
 
@@ -31,9 +30,6 @@ folder_path = '../../log/' + today
 # -------------------------------
 # implementation configuration
 # -------------------------------
-cps_datasets = ('swat')
-text_datasets = ('cola', 'reuters')
-image_datasets = ('mnist')
 
 implemented_datasets = ('swat', 'cola', 'reuters', 'mnist')
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
@@ -62,58 +58,28 @@ swat_freq_selected_dim = [0, 1, 31, 32]
 embedding = 's_bert'  # default
 # avg_glove, avg_bert, s_bert,...
 
-normal_class_index_list = [0]
-# reuters, mnist congigured
-# need to configure the rest
+# mnist normal class
+mnist_normal_classes = [0, 1, 2]
 
 # -------------------------------
 # clustering configuration
 # -------------------------------
 
 # cluster specific configuration
-
 # gaussian mixture model
 gmm_type = 'tied'
 
-#
-""" deep embedding clustering """
-#
-
-# temp dir for debugging
-temp_dec_cluster = "/home/junekyu/hdd/temp_dec/"
-
+# deep embedding clustering
+dec_pretrain_epochs = 300
+lower_dec_pretrain_epochs = 200
+dec_finetune_epochs = 500
 dec_batch_size = 256
 
-# pretrain
-dec_pretrain_epochs = 300
-dec_pretrain_lr = 0.1
-dec_pretrain_momentum = 0.9
-#  dec_pretrain_decay_step = 100
-# dec_pretrain_decay_rate = 0.1
-
-# finetune
-dec_finetune_epochs = 500
-dec_finetune_lr = 0.1
-dec_finetune_momentum = 0.9
-dec_finetune_decay_step = 100
-dec_finetune_decay_rate = 0.1
-
-# dec training stage
-dec_train_epoch = 100
-
-# reuters
-reuters_dec_finetune_epochs = 800
-reuters_dec_finetune_lr = 0.3
-reuters_dec_finetune_decay_step = 200
-reuters_dec_finetune_decay_rate = 0.5
-reuters_dec_train_epoch = 300
-
-# swat
-swat_dec_pretrain_epochs = 200
-swat_dec_lr = 1e-2
-swat_dec_lr_train = 1e-2
-swat_dec_momentum = 0.6
-swat_dec_momentum_train = 0.9
+set_dec_lower_learning_rate = False
+lower_lr = 1e-2
+lower_lr_train = 1e-2
+lower_momentum = 0.6
+lower_momentum_train = 0.9
 
 # meanshift clustering
 
@@ -129,25 +95,9 @@ svm_C = 1000
 
 knn_n_neighbors = 10
 
-# text classifier (2-layer GRU)
-text_classifier_input_size = 256  # need to be fixed
-text_classifier_hidden_size = 256
-text_classifier_output_size = 256
-text_classifier_lr = 0.001
-text_classifier_epoch = 10
+# lr = 0.001
 
-text_classifier_batch_size = 1024
+#  MAX_LEN = 64 # for BERT padding
 
-# -------------------------------
-# ood detector configuration
-# -------------------------------
-
-# odin softmax files dir
-sf_scores_path = '../softmax_scores'
-base_in_path = os.path.join(sf_scores_path, 'confidence_Base_In.txt')
-base_out_path = os.path.join(sf_scores_path, 'confidence_Base_Out.txt')
-odin_in_path = os.path.join(sf_scores_path, 'confidence_Odin_In.txt')
-odin_out_path = os.path.join(sf_scores_path, 'confidence_Odin_Out.txt')
-
-odin_temperature = 1000
-odin_perturbation_magnitude = 0.0012
+# CoLA data
+# CoLA_num_of_label = 2 # for CoLA dataset label specification
