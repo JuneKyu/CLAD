@@ -1,8 +1,14 @@
 from .cluster_models import GaussianMixture_clustering, DeepEmbedding_clustering
-from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier
+from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier
 from config import implemented_cluster_models, implemented_classifier_models
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from itertools import combinations
+
+# temporary import to test mnist data normalization
+import torch
+import torchvision
+from torchvision import transforms
+from data_util.utils import divide_data_label
 
 from .odin import apply_odin
 from .metric import calculate_metric
@@ -27,12 +33,11 @@ class Model(object):
         """TODO: to be defined. """
 
         self.dataset_name = dataset_name
-        self.train_x = dataset["train"][:][0]
-        self.train_y = dataset["train"][:][1]
-        self.test_in_x = dataset["test_in"][:][0]
-        self.test_in_y = dataset["test_in"][:][1]
-        self.test_out_x = dataset["test_out"][:][0]
-        self.test_out_y = dataset["test_out"][:][1]
+        self.dec_train = dataset["dec_train"]
+        self.dec_train_y = dataset["dec_train_y"]
+        self.train = dataset["train"]
+        self.test_in = dataset["test_in"]
+        self.test_out = dataset["test_out"]
 
         # cluster variables
         self.cluster_num = cluster_num
@@ -65,20 +70,25 @@ class Model(object):
             if (self.dataset_name == 'mnist'):
                 # use dec default configuration
                 print("")
+            elif (self.dataset_name == 'cifar10'):
+                config.dec_pretrain_epochs = config.cifar10_dec_pretrain_epochs
+                config.dec_finetune_epochs = config.cifar10_dec_finetune_epochs
+                config.dec_finetune_lr = config.cifar10_dec_finetune_lr
+                config.dec_finetune_momentum = config.cifar10_dec_finetune_momentum
+                config.dec_finetune_decay_step = config.cifar10_dec_finetune_decay_step
+                config.dec_finetune_decay_rate = config.cifar10_dec_finetune_decay_rate
+                config.dec_train_epochs = config.cifar10_dec_train_epochs
+                config.dec_train_lr = config.cifar10_dec_train_lr
             elif (self.dataset_name == 'reuters'):
                 config.dec_finetune_epochs = config.reuters_dec_finetune_epochs
                 config.dec_finetune_lr = config.reuters_dec_finetune_lr
                 config.dec_finetune_decay_step = config.reuters_dec_finetune_decay_step
                 config.dec_finetune_decay_rate = config.reuters_dec_finetune_decay_rate
-                config.dec_train_epoch = config.reuters_dec_train_epoch
+                config.dec_train_epochs = config.reuters_dec_train_epochs
             self.train_clusters, self.cluster_model = \
                 DeepEmbedding_clustering(
-                    train_x=self.train_x,
-                    train_y=self.train_y,
-                    #  val_x=self.val_x,
-                    #  val_y=self.val_y,
-                    #  test_x=self.test_x,
-                    #  test_y=self.test_y,
+                    train_x=self.dec_train,
+                    train_y=self.dec_train_y, # use label only for checking the score
                     n_components=self.cluster_num)
 
             #  if os.path.exists(config.temp_dec_cluster):
@@ -86,28 +96,16 @@ class Model(object):
             #      self.train_clusters = np.load(
             #          os.path.join(config.temp_dec_cluster,
             #                       "train_clusters.npy"))
-            #      self.val_clusters = np.load(
-            #          os.path.join(config.temp_dec_cluster, "val_clusters.npy"))
-            #      self.test_clusters = np.load(
-            #          os.path.join(config.temp_dec_cluster, "test_clusters.npy"))
             #  else:
             #      os.makedirs(config.temp_dec_cluster)
-            #      self.train_clusters, self.val_clusters, self.test_clusters, self.cluster_model = \
+            #      self.train_clusters, self.cluster_model = \
             #          DeepEmbedding_clustering(
-            #              train_x=self.train_x,
-            #              train_y=self.train_y,
-            #              val_x=self.val_x,
-            #              val_y=self.val_y,
-            #              test_x=self.test_x,
-            #              test_y=self.test_y,
+            #              train_x=self.dec_train,
+            #              train_y=self.dec_train_y, # need label only for checking the score
             #              n_components=self.cluster_num)
             #      np.save(
             #          os.path.join(config.temp_dec_cluster, "train_clusters"),
             #          self.train_clusters)
-            #      np.save(os.path.join(config.temp_dec_cluster, "val_clusters"),
-            #              self.val_clusters)
-            #      np.save(os.path.join(config.temp_dec_cluster, "test_clusters"),
-            #              self.test_clusters)
 
     # classify with cluster models using neural network models
     def classify_nn(self, dataset_name):
@@ -117,7 +115,8 @@ class Model(object):
             print("not implemented")
         elif dataset_name in config.text_datasets:
             print("")
-
+            # normalize mnist dataset
+            #  transforms.Normalize((0.1307,), (0.3081,)
             classifier = Linear_classifier(self.train_x,
                                            self.train_clusters,
                                            n_epochs=5000,
@@ -129,7 +128,7 @@ class Model(object):
                 "NN Classifier training accuracu : {}".format(train_accuracy))
             log.info(
                 "NN Classifier training accuracy = {}".format(train_accuracy))
-            apply_odin(classifier, self.test_in_x, self.test_out_x)
+            apply_odin(classifier, self.test_in, self.test_out)
             calculate_metric("mnist")
             #  calculate_metric("reuters")
 
@@ -138,11 +137,18 @@ class Model(object):
             #  classifier = GRU_text_classifier(self.train_x, self.train_clusters,
             #  self.test_x, self.test_clusters)
         elif dataset_name in config.image_datasets:
-            classifier = Linear_classifier(self.train_x,
+
+            #  classifier = FC3_classifier(self.train,
+            #                              self.train_clusters,
+            #                              n_epochs=200,
+            #                              lr=0.001)
+
+            classifier = Linear_classifier(self.train,
                                            self.train_clusters,
-                                           n_epochs=5000,
+                                           n_epochs=200,
                                            lr=0.001)
-            train_pred = classifier.predict(self.train_x.cuda(config.device))
+
+            train_pred = classifier.predict(self.train.cuda(config.device))
             train_accuracy = accuracy_score(train_pred, self.train_clusters)
 
             print(
@@ -150,7 +156,7 @@ class Model(object):
             log.info(
                 "NN Classifier training accuracy = {}".format(train_accuracy))
 
-            apply_odin(classifier, self.test_in_x, self.test_out_x)
+            apply_odin(classifier, self.test_in, self.test_out)
             calculate_metric("mnist")
 
 

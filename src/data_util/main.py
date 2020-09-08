@@ -7,6 +7,7 @@ from .swat import SWaT_Dataset
 from .cola import CoLA_Dataset
 from .reuters import Reuters_Dataset
 from .mnist import MNIST_Dataset
+from .cifar10 import CIFAR10_Dataset
 from config import implemented_datasets
 
 
@@ -46,5 +47,10 @@ def load_dataset(dataset_name, data_path):
         print("loading mnist dataset...")
         mnist_dataset = MNIST_Dataset(root_dir=data_path)
         dataset = mnist_dataset.get_dataset()
+
+    elif dataset_name == 'cifar10':
+        print('loading cifar10 dataset...')
+        cifar10_dataset = CIFAR10_Dataset(root_dir=data_path)
+        dataset = cifar10_dataset.get_dataset()
 
     return dataset

@@ -33,9 +33,9 @@ folder_path = '../../log/' + today
 # -------------------------------
 cps_datasets = ('swat')
 text_datasets = ('cola', 'reuters')
-image_datasets = ('mnist')
+image_datasets = ('mnist', 'cifar10')
 
-implemented_datasets = ('swat', 'cola', 'reuters', 'mnist')
+implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'cifar10')
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
 implemented_nlp_embeddings = ('avg_bert', 's_bert'
                               )  # need to implement more...
@@ -80,7 +80,8 @@ gmm_type = 'tied'
 #
 
 # temp dir for debugging
-temp_dec_cluster = "/home/junekyu/hdd/temp_dec/"
+#  temp_dec_cluster = "/home/junekyu/hdd/temp_dec/"
+temp_dec_cluster = "/home/junekyu/Study/nsr/etri_2019/data/temp_dec/"
 
 dec_batch_size = 256
 
@@ -99,21 +100,33 @@ dec_finetune_decay_step = 100
 dec_finetune_decay_rate = 0.1
 
 # dec training stage
-dec_train_epoch = 100
+dec_train_epochs = 100
+dec_train_lr = 0.01
+dec_train_momentum = 0.9
 
 # reuters
 reuters_dec_finetune_epochs = 800
 reuters_dec_finetune_lr = 0.3
 reuters_dec_finetune_decay_step = 200
 reuters_dec_finetune_decay_rate = 0.5
-reuters_dec_train_epoch = 300
+reuters_dec_train_epochs = 1000
 
 # swat
-swat_dec_pretrain_epochs = 200
-swat_dec_lr = 1e-2
-swat_dec_lr_train = 1e-2
-swat_dec_momentum = 0.6
-swat_dec_momentum_train = 0.9
+#  swat_dec_pretrain_epochs = 200
+#  swat_dec_lr = 1e-2
+#  swat_dec_lr_train = 1e-2
+#  swat_dec_momentum = 0.6
+#  swat_dec_momentum_train = 0.9
+
+# cifar10
+cifar10_dec_pretrain_epochs = 200
+cifar10_dec_finetune_epochs = 1200
+cifar10_dec_finetune_lr = 0.03  # 0.1 is default
+cifar10_dec_finetune_momentum = 0.6  # 0.9 is default
+cifar10_dec_finetune_decay_step = 400
+cifar10_dec_finetune_decay_rate = 0.5
+cifar10_dec_train_epochs = 500
+cifar10_dec_train_lr = 0.001
 
 # meanshift clustering
 
@@ -149,5 +162,10 @@ base_out_path = os.path.join(sf_scores_path, 'confidence_Base_Out.txt')
 odin_in_path = os.path.join(sf_scores_path, 'confidence_Odin_In.txt')
 odin_out_path = os.path.join(sf_scores_path, 'confidence_Odin_Out.txt')
 
+# original temper and magintude
+#  odin_temperature = 1000
+#  odin_perturbation_magnitude = 0.0012  # perturbation
 odin_temperature = 1000
-odin_perturbation_magnitude = 0.0012
+odin_perturbation_magnitude = 0.12
+
+# odin with temper 10, perturbation 0.12 : odin 0.9980 , base 0.4313

@@ -39,7 +39,9 @@ class dec_module():
             [self.input_dim, 500, 500, 2000, self.n_components],
             final_activation=None)
         #  autoencoder = StackedDenoisingAutoEncoder([28 * 28, 500, 500, 2000, 10], final_activation=None)
-        max_grad_norm = 5.
+
+        # gradient clipping
+        max_grad_norm = 3.
         torch_utils.clip_grad_norm_(autoencoder.parameters(), max_grad_norm)
 
         if self.cuda:
@@ -80,10 +82,12 @@ class dec_module():
                          encoder=autoencoder.encoder)
         if self.cuda:
             self.model.cuda()
-        dec_optimizer = SGD(self.model.parameters(), lr=0.01, momentum=0.9)
+        dec_optimizer = SGD(self.model.parameters(),
+                            lr=config.dec_train_lr,
+                            momentum=config.dec_train_momentum)
         train(dataset=self.ds_train,
               model=self.model,
-              epochs=config.dec_train_epoch,
+              epochs=config.dec_train_epochs,
               batch_size=256,
               optimizer=dec_optimizer,
               stopping_delta=0.000001,
@@ -107,59 +111,8 @@ class dec_module():
 
         train_predicted = np.array(train_predicted)
 
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-
-        # for dec clustering acc, auc
-        #  train_predicted, train_accuracy, train_normal_clusters, train_auc, train_normal_clusters_auc = binary_cluster_accuracy(
-        #      train_actual, train_predicted)
-
-        #  print("DEC training accuracy : {}".format(train_accuracy))
-        #  log.info("DEC training accuracy : {}".format(train_accuracy))
-        #  print("DEC normal_cluster_indexes : {}".format(train_normal_clusters))
-        #  log.info(
-        #      "DEC normal_cluster_indexes : {}".format(train_normal_clusters))
-        #  print("DEC training auc : {}".format(train_auc))
-        #  log.info("DEC training auc : {}".format(train_auc))
-        #  print("DEC normal cluster indexes auc : {}".format(
-        #      train_normal_clusters_auc))
-        #  log.info("DEC normal cluster indexes auc : {}".format(
-        #      train_normal_clusters_auc))
-
-        #  pdb.set_trace()
-
-        #  val_predicted, val_actual = predict(self.ds_val,
-        #                                      self.model,
-        #                                      1024,
-        #                                      silent=True,
-        #                                      return_actual=True,
-        #                                      cuda=self.cuda)
-        #  val_predicted = val_predicted.cpu().numpy()
-        #  val_actual = val_actual.cpu().numpy()
-        #  val_predicted, val_accuracy = binary_cluster_accuracy(
-        #  val_actual, val_predicted)
-
-        #  print("DEC validataion accuracy : {}".format(val_accuracy))
-        #  log.info("DEC validation accuracy : {}".format(val_accuracy))
-
-        #  test_predicted, test_actual = predict(self.ds_test,
-        #                                        self.model,
-        #                                        1024,
-        #                                        silent=True,
-        #                                        return_actual=True,
-        #                                        cuda=self.cuda)
-        #  test_predicted = test_predicted.cpu().numpy()
-        #  test_actual = test_actual.cpu().numpy()
-        #  test_predicted, test_accuracy = binary_cluster_accuracy(
-        #  test_actual, test_predicted)
-
-        #  print("DEC testing accuracy : {}".format(test_accuracy))
-        #  log.info("DEC testing accuracy : {}".format(test_accuracy))
+        print("DEC training accuracy : {}".format(train_accuracy))
+        log.info("DEC training accuracy : {}".format(train_accuracy))
 
         return train_predicted
 
@@ -231,6 +184,7 @@ def binary_cluster_accuracy(y_true,
     #  best_combi_auc = []
 
     for num_of_normal_indexes in cluster_indexes:
+        if (num_of_normal_indexes == 0 or num_of_normal_indexes == 1): continue
         combination_list = combinations(cluster_indexes, num_of_normal_indexes)
         for combination in combination_list:
             # for each combination
@@ -250,7 +204,7 @@ def binary_cluster_accuracy(y_true,
             #      best_auc = auc
             #      best_combi_auc = combination
 
-    #  print("best_acc : {} , best_combi : {}".format(best_acc, best_combi))
+    print("best_acc : {} , best_combi : {}".format(best_acc, best_combi))
     #  print("best_auc : {} , best_combi : {}".format(best_auc, best_combi_auc))
 
     #  return reassigned_ind, best_acc, best_combi, best_auc, best_combi_auc

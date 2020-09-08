@@ -17,6 +17,8 @@ import pdb
 
 def apply_odin(net, test_in, test_out):
 
+    print("in-distribution images")
+
     criterion = nn.CrossEntropyLoss()
     t0 = time.time()
     if os.path.exists(config.sf_scores_path) == False:
@@ -62,8 +64,14 @@ def apply_odin(net, test_in, test_out):
 
         gradient = torch.ge(inputs.grad.data, 0)
         gradient = (gradient.float() - 0.5) * 2
+        gradient = gradient * 50 / (79.0 / 255.0)
+        #  gradient = gradient / 0.6666  # if mnist
+        #  78.57
+        #  gradient = gradient * 50
+        #  dividing with std of mnist dataset
+        #  0.3081
+        #  gradient = gradient / (63.0 / 255.0)
 
-        gradient = gradient / (63.0 / 255.0)
         tempInputs = torch.add(inputs.data, -noise_magnitude, gradient)
         outputs = net(Variable(tempInputs))
         outputs = outputs / temper
@@ -82,14 +90,18 @@ def apply_odin(net, test_in, test_out):
 
         if j % 100 == 99:
             print("{:4}/{:4} data processed, {:.1f} seconds used.".format(
-                j + 1, len(test_in),
+                #  j + 1, len(test_in),
+                j + 1,
+                1000,
                 time.time() - t0))
             t0 = time.time()
 
+        if j > 1000:
+            break
+
         # out distribution test
 
-
-#  print("out-of-distribution images")
+    print("out-of-distribution images")
 
     for j, data in enumerate(test_out):
 
@@ -123,7 +135,10 @@ def apply_odin(net, test_in, test_out):
         gradient = torch.ge(inputs.grad.data, 0)
         gradient = (gradient.float() - 0.5) * 2
         # Normalizing the gradient to the same space of image
-        gradient = gradient / (63.0 / 255.0)
+        #  gradient = gradient / (63.0 / 255.0)
+        #  gradient = gradient / 0.6666  # if mnist
+        gradient = gradient * 50 / (79.0 / 255.0)
+        #  0.6665700000000001
         # Adding small perturbations to images
         tempInputs = torch.add(inputs.data, -noise_magnitude, gradient)
         outputs = net(Variable(tempInputs))
@@ -143,6 +158,11 @@ def apply_odin(net, test_in, test_out):
 
         if j % 100 == 99:
             print("{:4}/{:4} data processed, {:.1f} seconds used.".format(
-                j + 1, len(test_out),
+                #  j + 1, len(test_out),
+                j + 1,
+                1000,
                 time.time() - t0))
             t0 = time.time()
+
+        if j > 1000:
+            break
