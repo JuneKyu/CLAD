@@ -31,6 +31,7 @@ def main():
                         default='sentence_embedding')
     parser.add_argument('--normal_class_index_list', nargs='+',
                         default=[0])  # get a list of normal class indexes
+    parser.add_argument('--classifier', type=str, default='linear')
     parser.add_argument('--cluster_num', type=int, default=5)
     parser.add_argument('--cluster_type', type=str, default='gmm')
     parser.add_argument('--classifier_type', type=str, default='svm')
@@ -39,19 +40,28 @@ def main():
 
     args = parser.parse_args()
 
-    cluster_num = args.cluster_num
-    cluster_type = args.cluster_type
-    classifier_type = args.classifier_type
-    normal_class_index_list = args.normal_class_index_list
-    normal_class_index_list = [int(i) for i in normal_class_index_list]
-    config.normal_class_index_list = normal_class_index_list
-
     # data_path
     data_path = args.data_path
     # data_name
     dataset_name = args.dataset_name
     # if text data, set sentence embedding
     config.sentence_embedding = args.sentence_embedding
+    # if image data, set rgb flag
+    if (dataset_name in config.rgb_datasets):
+        config.is_rgb = True
+        config.cvae_channel = 3
+
+    classifier = args.classifier
+    config.classifier = classifier
+
+    cluster_num = args.cluster_num
+    cluster_type = args.cluster_type
+    config.cluster_type = cluster_type
+    classifier_type = args.classifier_type
+    normal_class_index_list = args.normal_class_index_list
+    normal_class_index_list = [int(i) for i in normal_class_index_list]
+    config.normal_class_index_list = normal_class_index_list
+    config.cluster_num = cluster_num
 
     # logger
     log = config.logger

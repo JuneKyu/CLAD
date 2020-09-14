@@ -1,5 +1,5 @@
 from .cluster_models import GaussianMixture_clustering, DeepEmbedding_clustering
-from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier
+from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier
 from config import implemented_cluster_models, implemented_classifier_models
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from itertools import combinations
@@ -66,7 +66,7 @@ class Model(object):
             #      n_components=self.cluster_num,
             #      covariance_type=config.gmm_type)
 
-        elif self.cluster_type == 'dec':  # deep embedding clustering
+        elif self.cluster_type == 'dec' or 'cvae':  # deep embedding clustering
             if (self.dataset_name == 'mnist'):
                 # use dec default configuration
                 print("")
@@ -85,6 +85,8 @@ class Model(object):
                 config.dec_finetune_decay_step = config.reuters_dec_finetune_decay_step
                 config.dec_finetune_decay_rate = config.reuters_dec_finetune_decay_rate
                 config.dec_train_epochs = config.reuters_dec_train_epochs
+
+            #  pdb.set_trace()
             self.train_clusters, self.cluster_model = \
                 DeepEmbedding_clustering(
                     train_x=self.dec_train,
@@ -106,6 +108,9 @@ class Model(object):
             #      np.save(
             #          os.path.join(config.temp_dec_cluster, "train_clusters"),
             #          self.train_clusters)
+
+        #  elif self.cluster_type == 'cvae':  # convolutional variational auto encoder
+        #      print("")
 
     # classify with cluster models using neural network models
     def classify_nn(self, dataset_name):
@@ -138,15 +143,33 @@ class Model(object):
             #  self.test_x, self.test_clusters)
         elif dataset_name in config.image_datasets:
 
-            #  classifier = FC3_classifier(self.train,
-            #                              self.train_clusters,
-            #                              n_epochs=200,
-            #                              lr=0.001)
+            classifier_name = config.classifier
 
-            classifier = Linear_classifier(self.train,
-                                           self.train_clusters,
-                                           n_epochs=200,
-                                           lr=0.001)
+            assert classifier_name in implemented_classifier_models
+
+            if (classifier_name == 'knn'):
+                print("")
+            elif (classifier_name == 'svm'):
+                print("")
+            elif (classifier_name == 'linear'):
+                classifier = Linear_classifier(self.train,
+                                               self.train_clusters,
+                                               n_epochs=3000,
+                                               lr=0.001)
+            elif (classifier_name == 'fc3'):
+                classifier = FC3_classifier(self.train,
+                                            self.train_clusters,
+                                            n_epochs=3000,
+                                            lr=0.001)
+            elif (classifier_name == 'cnn'):  # for image data
+                batch_size = config.cnn_classifier_batch_size
+                is_rgb = config.is_rgb
+                classifier = CNN_classifier(self.train,
+                                            self.train_clusters,
+                                            n_epochs=100,
+                                            lr=0.001,
+                                            batch_size=batch_size,
+                                            is_rgb=is_rgb)
 
             train_pred = classifier.predict(self.train.cuda(config.device))
             train_accuracy = accuracy_score(train_pred, self.train_clusters)

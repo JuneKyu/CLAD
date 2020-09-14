@@ -11,7 +11,7 @@ import math
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.optim import Adam
+from torch.optim import Adam, lr_scheduler
 from torch.utils.data import TensorDataset, DataLoader
 
 from models.models import LinearClassification
@@ -63,8 +63,6 @@ def Linear_classifier(train_data, train_cluster, n_epochs, lr):
     criterion = nn.CrossEntropyLoss()  # Log Softmax + ClassNLL Loss
     optimizer = Adam(model.parameters(), lr=lr)
 
-    train_losses = np.zeros(n_epochs)
-
     for iter_ in range(n_epochs):
         outputs = model(train_data)
         outputs = torch.squeeze(outputs)
@@ -114,20 +112,49 @@ def FC3_classifier(train_data, train_cluster, n_epochs, lr):
     return model
 
 
-def CNN_classifier(train_data, train_cluster, n_epochs, lr):
+# batch_size, isRGB needs to be specified
+def CNN_classifier(train_data,
+                   train_cluster,
+                   n_epochs,
+                   lr,
+                   batch_size=100,
+                   is_rgb=False):
 
-    #  if (len(train_data) > 2):
-    #      train_data = torch.reshape(train_data, (len(train_data), -1))
-
-    pdb.set_trace()
-
-    _, input_size = train_data.shape
-    scaler = StandardScaler()
-    train_data = scaler.fit_transform(train_data)
-    train_data = torch.from_numpy(train_data.astype(np.float32)).cuda(
-        config.device)
+    input_size = train_data.shape[0]
     train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    #  model = CNNClassification(batch_size)
+    train = TensorDataset(train_data, train_cluster)
+    train_loader = DataLoader(train,
+                              batch_size=batch_size,
+                              shuffle=True,
+                              drop_last=True)
+
+    model = CNNClassification(batch_size, is_rgb=is_rgb)
+    model.to(config.device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = Adam(model.parameters(), lr=lr)
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
+                                               threshold=0.1,
+                                               patience=1,
+                                               mode='min')
+
+    for iter_ in range(n_epochs):
+        for _, [image, label] in enumerate(train_loader):
+            image = image.to(config.device)
+            label = label.to(config.device)
+            outputs = model(image)
+
+            loss = criterion(outputs, label)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        scheduler.step(loss)
+
+        if (iter_ + 1) % 10 == 0:
+            print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
+                                                                  n_epochs,
+                                                                  loss.item()))
+
+    return model
 
 
 # for text classifier

@@ -6,12 +6,12 @@ from torch.utils.data import TensorDataset
 import torch.nn.utils as torch_utils
 from torch.optim import SGD
 from torch.optim.lr_scheduler import StepLR
-from ptsdae.sdae import StackedDenoisingAutoEncoder
+from models.ptsdae.sdae import StackedDenoisingAutoEncoder
 
-from ptdec.dec import DEC
-from ptdec.model import train, predict
-import ptsdae.model as ae
-from ptdec.utils import cluster_accuracy
+from models.ptdec.dec import DEC
+from models.ptdec.model import train, predict
+import models.ptsdae.model as ae
+from models.ptdec.utils import cluster_accuracy
 
 from typing import Optional
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score

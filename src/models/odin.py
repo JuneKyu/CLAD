@@ -36,6 +36,7 @@ def apply_odin(net, test_in, test_out):
     for j, data in enumerate(test_in):
 
         inputs = Variable(data.cuda(config.device), requires_grad=True)
+        net.eval()
         outputs = net(inputs)
 
         # Calculating the confidence of the output, no perturbation added here, no temperature scaling used

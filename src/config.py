@@ -34,15 +34,16 @@ folder_path = '../../log/' + today
 cps_datasets = ('swat')
 text_datasets = ('cola', 'reuters')
 image_datasets = ('mnist', 'cifar10')
+rgb_datasets = ('cifar10')
 
 implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'cifar10')
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
-implemented_nlp_embeddings = ('avg_bert', 's_bert'
-                              )  # need to implement more...
+implemented_nlp_embeddings = ('avg_bert', 's_bert')
 # embeddings to implement = 'avg_glove'
-implemented_cluster_models = ('gmm', 'dec')  # need to implement more...
-# cluster_models to implement = ''
-implemented_classifier_models = ('knn', 'svm')  # need to implement more...
+implemented_cluster_models = ('gmm', 'dec', 'cvae')
+
+implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn')
+# need to implement more...
 
 # -------------------------------
 # data configuration
@@ -78,10 +79,13 @@ gmm_type = 'tied'
 #
 """ deep embedding clustering """
 #
+cluster_type = 'dec'
 
 # temp dir for debugging
 #  temp_dec_cluster = "/home/junekyu/hdd/temp_dec/"
 temp_dec_cluster = "/home/junekyu/Study/nsr/etri_2019/data/temp_dec/"
+
+cluster_num = 10
 
 dec_batch_size = 256
 
@@ -128,6 +132,14 @@ cifar10_dec_finetune_decay_rate = 0.5
 cifar10_dec_train_epochs = 500
 cifar10_dec_train_lr = 0.001
 
+# cvae + dec_clustering
+
+cvae_channel = 1
+cvae_z_dim = 128
+cvae_kernel_size = 3
+cvae_height = 28
+cvae_width = 28
+
 # meanshift clustering
 
 ms_quantile = 0.2
@@ -136,6 +148,9 @@ ms_n_samples = 500
 # -------------------------------
 # classifier configuration
 # -------------------------------
+
+classifier = 'linear'
+#  implemented_classifiers = ('knn', 'svm', 'linear', 'fc3', 'cnn')
 
 svm_gamma = 0.1
 svm_C = 1000
@@ -150,6 +165,9 @@ text_classifier_lr = 0.001
 text_classifier_epoch = 10
 
 text_classifier_batch_size = 1024
+
+cnn_classifier_batch_size = 100
+is_rgb = False
 
 # -------------------------------
 # ood detector configuration
@@ -166,6 +184,6 @@ odin_out_path = os.path.join(sf_scores_path, 'confidence_Odin_Out.txt')
 #  odin_temperature = 1000
 #  odin_perturbation_magnitude = 0.0012  # perturbation
 odin_temperature = 1000
-odin_perturbation_magnitude = 0.12
+odin_perturbation_magnitude = 0.0012
 
 # odin with temper 10, perturbation 0.12 : odin 0.9980 , base 0.4313
