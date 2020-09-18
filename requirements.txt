@@ -6,7 +6,7 @@ pip install torchvision
 
 ptdae install:
 git clone https://github.com/vlukiyanov/pt-sdae.git
-cd ptdae
+cd pt-sdae
 python setup.py install
 
 ptdec install:

@@ -31,8 +31,8 @@ class MNIST_Dataset(object):
         self.dec_train_x, self.dec_train_y, _, _ = divide_data_label(
             self.dec_train, train=True)
         self.train_x, _, _, _ = divide_data_label(self.train, train=True)
-        self.test_in_x, _, self.test_out_x, _ = divide_data_label(
-            self.dec_test, train=False)
+        self.test_in_x, _, self.test_out_x, _ = divide_data_label(self.test,
+                                                                  train=False)
 
         self.dec_train_x = torch.tensor(self.dec_train_x)
         self.dec_train_y = torch.tensor(self.dec_train_y)
@@ -56,19 +56,7 @@ def _transformation(img):
 
 
 def mnist_dataset(directory='../data'):
-
     mnist_data_path = directory
-    dec_img_transform = transforms.Compose(
-        [transforms.Lambda(_transformation)])
-    dec_train = MNIST(mnist_data_path,
-                      download=True,
-                      train=True,
-                      transform=dec_img_transform)
-    dec_test = MNIST(mnist_data_path,
-                     download=True,
-                     train=False,
-                     transform=dec_img_transform)
-
     mnist_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.1307], std=[0.3081])
@@ -82,5 +70,23 @@ def mnist_dataset(directory='../data'):
                  download=True,
                  train=False,
                  transform=mnist_transform)
+
+    dec_img_transform = transforms.Compose(
+        [transforms.Lambda(_transformation)])
+
+    if (config.cluster_type == 'cvae'):
+        dec_train = train
+        dec_test = test
+        config.cvae_height = 28
+        config.cvae_weight = 28
+    else:
+        dec_train = MNIST(mnist_data_path,
+                          download=True,
+                          train=True,
+                          transform=dec_img_transform)
+        dec_test = MNIST(mnist_data_path,
+                         download=True,
+                         train=False,
+                         transform=dec_img_transform)
 
     return dec_train, dec_test, train, test

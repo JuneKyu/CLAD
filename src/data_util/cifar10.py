@@ -28,8 +28,8 @@ class CIFAR10_Dataset(object):
         #  self.dec_train_x, self.dec_train_y, _, _ = divide_data_label(
         #  self.train, train=True)
         self.train_x, _, _, _ = divide_data_label(self.train, train=True)
-        self.test_in_x, _, self.test_out_x, _ = divide_data_label(
-            self.dec_test, train=False)
+        self.test_in_x, _, self.test_out_x, _ = divide_data_label(self.test,
+                                                                  train=False)
 
         self.dec_train_x = torch.tensor(self.dec_train_x)
         self.dec_train_y = torch.tensor(self.dec_train_y)

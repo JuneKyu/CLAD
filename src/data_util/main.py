@@ -53,4 +53,6 @@ def load_dataset(dataset_name, data_path):
         cifar10_dataset = CIFAR10_Dataset(root_dir=data_path)
         dataset = cifar10_dataset.get_dataset()
 
+    #  elif dataset_name == 'stl10':
+
     return dataset
