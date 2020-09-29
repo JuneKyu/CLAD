@@ -1,11 +1,9 @@
-#  from .cluster_model import clustering
 from .deep_embedding_clustering import DEC_Module
 from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier
 from config import implemented_cluster_models, implemented_classifier_models
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from itertools import combinations
 
-# temporary import to test mnist data normalization
 import torch
 import torchvision
 from torchvision import transforms

@@ -6,7 +6,6 @@ import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
 from torch.optim import SGD
 import torch.nn.utils as torch_utils
-
 from typing import Optional
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.cluster import KMeans
@@ -69,8 +68,6 @@ class DEC_Module():
                                    config.device)
         self.encoder.apply(init_weights)
         self.decoder.apply(init_weights)
-        #  self.dec = DEC(cluster_type, n_components, n_hidden_features)
-        #  self.dec = DEC(self.encoder)
 
     def acc_pretrain(self, encoder, decoder):
         encoder.eval()

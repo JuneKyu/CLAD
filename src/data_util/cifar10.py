@@ -24,8 +24,6 @@ class CIFAR10_Dataset(object):
         self.test_out_x = None
 
     def get_dataset(self):
-        #  self.dec_train_x, self.dec_train_y, _, _ = divide_data_label(
-        #      self.dec_train, train=True)
         self.train_x, self.train_y, _, _ = divide_data_label(self.train,
                                                              train=True)
         self.test_in_x, _, self.test_out_x, _ = divide_data_label(self.test,
@@ -46,24 +44,9 @@ class CIFAR10_Dataset(object):
         return dataset
 
 
-#  def _transformation(img):
-#      return torch.ByteTensor(torch.ByteStorage.from_buffer(
-#          img.tobytes())).float() * 0.02
-
-
 def cifar10_dataset(directory='../data'):
 
     cifar10_data_path = directory
-    #  img_transform = transforms.Compose([transforms.Lambda(_transformation)])
-    #  dec_train = CIFAR10(cifar10_data_path,
-    #                      download=True,
-    #                      train=True,
-    #                      transform=img_transform)
-    #  dec_test = CIFAR10(cifar10_data_path,
-    #                     download=True,
-    #                     train=False,
-    #                     transform=img_transform)
-
     cifar_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=[123.3 / 255, 123.0 / 255, 113.9 / 255],
@@ -79,5 +62,4 @@ def cifar10_dataset(directory='../data'):
                    train=False,
                    transform=cifar_transform)
 
-    #  return dec_train, dec_test, train, test
     return train, test

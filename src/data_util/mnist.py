@@ -27,15 +27,11 @@ class MNIST_Dataset(object):
 
     def get_dataset(self):
 
-        #  self.dec_train_x, self.dec_train_y, _, _ = divide_data_label(
-        #      self.dec_train, train=True)
         self.train_x, self.train_y, _, _ = divide_data_label(self.train,
                                                              train=True)
         self.test_in_x, _, self.test_out_x, _ = divide_data_label(self.test,
                                                                   train=False)
 
-        #  self.dec_train_x = torch.tensor(self.dec_train_x)
-        #  self.dec_train_y = torch.tensor(self.dec_train_y)
         self.train_x = torch.tensor(self.train_x)
         self.train_y = torch.tensor(self.train_y)
         self.test_in_x = torch.tensor(self.test_in_x)
@@ -48,11 +44,6 @@ class MNIST_Dataset(object):
         }
 
         return dataset
-
-
-#  def _transformation(img):
-#      return torch.ByteTensor(torch.ByteStorage.from_buffer(
-#          img.tobytes())).float() * 0.02
 
 
 def mnist_dataset(directory='../data'):
@@ -71,23 +62,4 @@ def mnist_dataset(directory='../data'):
                  train=False,
                  transform=mnist_transform)
 
-    #  dec_img_transform = transforms.Compose(
-    #      [transforms.Lambda(_transformation)])
-
-    #  if (config.cluster_type == 'cvae'):
-    #      dec_train = train
-    #      dec_test = test
-    #      config.cvae_height = 28
-    #      config.cvae_weight = 28
-    #  else:
-    #      dec_train = MNIST(mnist_data_path,
-    #                        download=True,
-    #                        train=True,
-    #                        transform=dec_img_transform)
-    #      dec_test = MNIST(mnist_data_path,
-    #                       download=True,
-    #                       train=False,
-    #                       transform=dec_img_transform)
-
-    #  return dec_train, dec_test, train, test
     return train, test

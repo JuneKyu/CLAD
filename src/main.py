@@ -56,6 +56,7 @@ def main():
     cluster_num = args.cluster_num
     cluster_type = args.cluster_type
     config.cluster_type = cluster_type
+
     normal_class_index_list = args.normal_class_index_list
     normal_class_index_list = [int(i) for i in normal_class_index_list]
     config.normal_class_index_list = normal_class_index_list
@@ -107,8 +108,7 @@ def main():
                   dataset=dataset,
                   cluster_num=cluster_num,
                   cluster_type=cluster_type,
-                  classifier = classifier)
-
+                  classifier=classifier)
 
     print("clustering...")
     log.info("clustering...")
