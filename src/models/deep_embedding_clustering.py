@@ -1,169 +1,390 @@
 # -*- coding: utf-8 -*-
 
 import torch
-from torch.utils.data import Dataset
-from torch.utils.data import TensorDataset
-import torch.nn.utils as torch_utils
-from torch.optim import SGD
-from torch.optim.lr_scheduler import StepLR
-from models.ptsdae.sdae import StackedDenoisingAutoEncoder
+import torch.nn as nn
 
-from models.ptdec.dec import DEC
-from models.ptdec.model import train, predict
-import models.ptsdae.model as ae
-from models.ptdec.utils import cluster_accuracy
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler
+from torch.optim import SGD
+import torch.nn.utils as torch_utils
 
 from typing import Optional
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+from sklearn.cluster import KMeans
 from itertools import combinations
 import numpy as np
+
+from tqdm import tqdm
 
 import pdb
 
 import config
 
 
-class dec_module():
-    def __init__(self, train_x, train_y, n_components=5):
-        self.cuda = config.device
-        self.input_dim = len(train_x[0])
-        self.ds_train = CachedData(data_x=train_x,
-                                   data_y=train_y,
-                                   cuda=self.cuda)
-        #  self.ds_val = CachedData(data_x=val_x, data_y=val_y, cuda=self.cuda)
-        #  self.ds_test = CachedData(data_x=test_x, data_y=test_y, cuda=self.cuda)
+def set_data(train_x, train_y, batch_size=32):
+
+    num_data = train_x.shape[0]
+    channel_size = train_x.shape[1]
+    height = train_x.shape[2]
+    width = train_x.shape[3]
+    data = TensorDataset(train_x, train_y)
+    #  data_sampler = RandomSampler(data)
+    #  dataloader = DataLoader(data, sampler=data_sampler, batch_size=batch_size)
+    dataloader = DataLoader(data, batch_size=batch_size)
+    return dataloader, height, width, channel_size, num_data
+
+
+def init_weights(m):
+    if (isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear)):
+        nn.init.xavier_uniform_(m.weight)
+        nn.init.constant_(m.bias, 0)
+
+
+class DEC_Module():
+    def __init__(self,
+                 train_x,
+                 train_y,
+                 batch_size,
+                 cluster_type="dec",
+                 n_components=5,
+                 n_hidden_features=10,
+                 stopping_delta=0.001):
+        #  self.cuda = config.device
+        #  self.batch_size = batch_size
+        self.stopping_delta = stopping_delta
+        self.dataloader, self.height, self.width, self.channel_size, self.num_data = set_data(
+            train_x, train_y, batch_size=batch_size)
         self.n_components = n_components
+        self.n_hidden_features = n_hidden_features
+        self.encoder = Encoder(cluster_type=cluster_type,
+                               height=self.height,
+                               width=self.width,
+                               n_components=n_components,
+                               n_hidden_features=n_hidden_features).to(
+                                   config.device)
+        self.decoder = Decoder(cluster_type=cluster_type,
+                               height=self.height,
+                               width=self.width,
+                               n_components=n_components,
+                               n_hidden_features=n_hidden_features).to(
+                                   config.device)
+        self.encoder.apply(init_weights)
+        self.decoder.apply(init_weights)
+        #  self.dec = DEC(cluster_type, n_components, n_hidden_features)
+        #  self.dec = DEC(self.encoder)
 
-    def fit(self):
-        autoencoder = StackedDenoisingAutoEncoder(
-            [self.input_dim, 500, 500, 2000, self.n_components],
-            final_activation=None)
-        #  autoencoder = StackedDenoisingAutoEncoder([28 * 28, 500, 500, 2000, 10], final_activation=None)
+    def acc_pretrain(self, encoder, decoder):
+        encoder.eval()
+        decoder.eval()
+        test_x = []
+        true_labels = []
+        for i, d in enumerate(self.dataloader):
+            out = encoder(d[0].cuda()).cpu().detach().numpy()
+            test_x.extend(out)
+            label = d[1].cpu().detach().numpy()
+            true_labels.extend(label)
+        true_labels = np.array(true_labels)
+        km = KMeans(n_clusters=len(np.unique(true_labels)),
+                    n_init=20,
+                    n_jobs=4)
+        y_pred = km.fit_predict(test_x)
+        acc = cluster_accuracy(true_labels, y_pred)
+        return acc
 
-        # gradient clipping
-        max_grad_norm = 3.
-        torch_utils.clip_grad_norm_(autoencoder.parameters(), max_grad_norm)
+    def acc_train(self, dec):
+        dec.eval()
+        test_x = []
+        true_labels = []
+        for i, d in enumerate(self.dataloader):
+            out = dec.encoder(d[0].cuda()).cpu().detach().numpy()
+            test_x.extend(out)
+            label = d[1].cpu().detach().numpy()
+            true_labels.extend(label)
+        true_labels = np.array(true_labels)
+        km = KMeans(n_clusters=len(np.unique(true_labels)),
+                    n_init=20,
+                    n_jobs=4)
+        y_pred = km.fit_predict(test_x)
+        acc = cluster_accuracy(true_labels, y_pred)
+        return acc
 
-        if self.cuda:
-            autoencoder.cuda()
-        print('Pretraining stage.')
-        ae.pretrain(
-            self.ds_train,
-            autoencoder,
-            cuda=self.cuda,
-            #  validation=self.ds_val,
-            epochs=config.dec_pretrain_epochs,
-            batch_size=config.dec_batch_size,
-            optimizer=lambda model: SGD(model.parameters(),
-                                        lr=config.dec_pretrain_lr,
-                                        momentum=config.dec_pretrain_momentum),
-            scheduler=lambda x: StepLR(x, 100, gamma=0.1),
-            corruption=0.2)
-        print('Training stage.')
-        ae_optimizer = SGD(params=autoencoder.parameters(),
-                           lr=config.dec_finetune_lr,
-                           momentum=config.dec_finetune_momentum)
-        ae.train(
-            self.ds_train,
-            autoencoder,
-            cuda=self.cuda,
-            #  validation=self.ds_val,
-            epochs=config.dec_finetune_epochs,
-            batch_size=config.dec_batch_size,
-            optimizer=ae_optimizer,
-            scheduler=StepLR(ae_optimizer,
-                             config.dec_finetune_decay_step,
-                             gamma=config.dec_finetune_decay_rate),
-            corruption=0.2)
+    def pretrain(self, epochs, lr, momentum):
+        self.encoder.to(config.device)
+        self.decoder.to(config.device)
+        #  gradient clipping
+        #  max_grad_norm = 1.
+        #  torch_utils.clip_grad_norm_(self.encoder.parameters(), max_grad_norm)
+        #  torch_utils.clip_grad_norm_(self.decoder.parameters(), max_grad_norm)
 
-        print('DEC stage.')
-        self.model = DEC(cluster_number=self.n_components,
-                         hidden_dimension=self.n_components,
-                         encoder=autoencoder.encoder)
-        if self.cuda:
-            self.model.cuda()
-        dec_optimizer = SGD(self.model.parameters(),
-                            lr=config.dec_train_lr,
-                            momentum=config.dec_train_momentum)
-        train(dataset=self.ds_train,
-              model=self.model,
-              epochs=config.dec_train_epochs,
-              batch_size=256,
-              optimizer=dec_optimizer,
-              stopping_delta=0.000001,
-              cuda=self.cuda)
+        loss_function = nn.MSELoss()
+        loss_value = 0
+        optimizer_enc = SGD(params=self.encoder.parameters(),
+                            lr=lr,
+                            momentum=momentum)
+        optimizer_dec = SGD(params=self.decoder.parameters(),
+                            lr=lr,
+                            momentum=momentum)
+
+        for epoch in range(epochs):
+            self.encoder.train()
+            self.decoder.train()
+            data_iterator = tqdm(self.dataloader,
+                                 leave='True',
+                                 unit='batch',
+                                 postfix={
+                                     'epoch': epoch,
+                                     'loss': '%.6f' % 0.0,
+                                 })
+            for index, batch in enumerate(data_iterator):
+                if (isinstance(batch, tuple)
+                        or isinstance(batch, list) and len(batch) in [1, 2]):
+                    batch = batch[0]
+                batch = batch.cuda(non_blocking=True)
+
+                output = self.encoder(batch)
+                output = self.decoder(output)
+                loss = loss_function(output, batch)
+                loss_value = float(loss.item())
+                optimizer_enc.zero_grad()
+                optimizer_dec.zero_grad()
+                loss.backward()
+                optimizer_enc.step()
+                optimizer_dec.step()
+                data_iterator.set_postfix(
+                    epoch=epoch,
+                    loss='%.6f' % loss_value,
+                )
+            acc = self.acc_pretrain(self.encoder, self.decoder)
+            print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
+        print("pretraining autoencoder ended.")
+
+    def train(self, epochs, lr, momentum):
+        self.dec = DEC(self.encoder)
+        assert self.encoder == self.dec.encoder
+        optimizer = SGD(self.dec.parameters(), lr=lr, momentum=momentum)
+
+        data_iterator = tqdm(self.dataloader,
+                             leave='True',
+                             unit='batch',
+                             postfix={
+                                 'epoch': -1,
+                                 'acc': '%.4f' % 0.0,
+                                 'loss': '%.6f' % 0.0,
+                             })
+        km = KMeans(n_clusters=self.n_components, n_init=20, n_jobs=4)
+        self.dec.train()
+        self.dec.to(config.device)
+        features = []
+        actual = []
+        for index, batch in enumerate(data_iterator):
+            if ((isinstance(batch, tuple) or isinstance(batch, list))
+                    and len(batch) == 2):
+                batch, value = batch
+                actual.append(value)
+            batch = batch.cuda(non_blocking=True)
+            features.append(self.dec.encoder(batch).detach().cpu())
+        actual = torch.cat(actual).long()
+        predicted = km.fit_predict(torch.cat(features).numpy())
+        predicted_previous = torch.tensor(np.copy(predicted), dtype=torch.long)
+
+        accuracy = self.acc_train(self.dec)
+        cluster_centers = torch.tensor(km.cluster_centers_,
+                                       dtype=torch.float,
+                                       requires_grad=True)
+        cluster_centers = cluster_centers.cuda(non_blocking=True)
+        with torch.no_grad():
+            self.dec.state_dict()['assignment.cluster_centers'].copy_(
+                cluster_centers)
+        loss_function = nn.KLDivLoss(size_average=False)
+        delta_label = None
+        for epoch in range(epochs):
+            print(epoch)
+            features = []
+            data_iterator = tqdm(self.dataloader,
+                                 leave='True',
+                                 unit='batch',
+                                 postfix={
+                                     'epoch': epoch,
+                                     'acc': '%.4f' % (accuracy or 0.0),
+                                     'loss': '%.8f' % 0.0,
+                                     'dlb': '%.4f' % (delta_label or 0.0)
+                                 })
+            self.dec.train()
+            for index, batch in enumerate(data_iterator):
+                if ((isinstance(batch, tuple) or isinstance(batch, list))
+                        and len(batch) == 2):
+                    batch, _ = batch
+                batch = batch.cuda(non_blocking=True)
+                output = self.dec(batch)
+                target = target_distribution(output).detach()
+                loss = loss_function(output.log(), target) / output.shape[0]
+                data_iterator.set_postfix(epoch=epoch,
+                                          acc='%.4f' % (accuracy or 0.0),
+                                          loss='%.8f' % float(loss.item()),
+                                          dlb='%.4f' % (delta_label or 0.0))
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step(closure=None)
+                features.append(self.dec.encoder(batch).detach().cpu())
+                if index % 10 == 0:  # update_freq = 10
+                    loss_value = float(loss.item())
+                    data_iterator.set_postfix(
+                        epoch=epoch,
+                        acc='%.4f' % (accuracy or 0.0),
+                        loss='%.8f' % loss_value,
+                        dlb='%.4f' % (delta_label or 0.0),
+                    )
+            predicted, actual = self.predict()
+            delta_label = float(
+                (predicted != predicted_previous
+                 ).float().sum().item()) / predicted_previous.shape[0]
+            if self.stopping_delta is not None and delta_label < self.stopping_delta:
+                print(
+                    'Early stopping as label delta "%1.5f" less tahn "%1.5f".'
+                    % (delta_label, self.stopping_delta))
+                break
+            predicted_previous = predicted
+            accuracy = self.acc_train(self.dec)
+
+        print("training dec ended.")
 
     def predict(self):
-        log = config.logger
-
-        train_predicted, train_actual = predict(self.ds_train,
-                                                self.model,
-                                                1024,
-                                                silent=True,
-                                                return_actual=True,
-                                                cuda=self.cuda)
-        train_predicted = train_predicted.cpu().numpy()
-        train_actual = train_actual.cpu().numpy()
-
-        print("finding the best combination for the clusters")
-        train_predicted, train_accuracy, best_combi = binary_cluster_accuracy(
-            train_actual, train_predicted)
-
-        train_predicted = np.array(train_predicted)
-
-        print("DEC training accuracy : {}".format(train_accuracy))
-        log.info("DEC training accuracy : {}".format(train_accuracy))
-
-        return train_predicted
+        data_iterator = tqdm(
+            self.dataloader,
+            leave=True,
+            unit='batch',
+        )
+        features = []
+        actual = []
+        self.dec.eval()
+        for batch in data_iterator:
+            if ((isinstance(batch, tuple) or isinstance(batch, list))
+                    and len(batch) == 2):
+                batch, value = batch
+                actual.append(value)
+            batch = batch.cuda(non_blocking=True)
+            features.append(self.dec(batch).detach().cpu())
+        return torch.cat(features).max(1)[1], torch.cat(actual).long()
 
 
-def pred_labels_to_binary_labels(predicted, reassignment):
-    for i in range(len(predicted)):
-        if reassignment[predicted[i]] in config.normal_class_index_list:
-            predicted[i] = 0
+class DEC(nn.Module):
+    def __init__(self, encoder: torch.nn.Module):
+        super(DEC, self).__init__()
+        self.encoder = encoder
+        self.assignment = ClusterAssignment(
+            self.encoder.n_components,
+            self.encoder.n_hidden_features,
+            alpha=1.0
+        )  # alpha represent the degrees of freedom in the t-distribution
+
+    def forward(self, x):
+        out = self.assignment(self.encoder(x))
+        return out
+
+
+class ClusterAssignment(nn.Module):
+    def __init__(self,
+                 cluster_number: int,
+                 embedding_dimension: int,
+                 alpha: float = 1.0,
+                 cluster_centers: Optional[torch.Tensor] = None) -> None:
+        super(ClusterAssignment, self).__init__()
+        self.embedding_dimension = embedding_dimension
+        self.cluster_number = cluster_number
+        self.alpha = alpha
+        if cluster_centers is None:
+            initial_cluster_centers = torch.zeros(self.cluster_number,
+                                                  self.embedding_dimension,
+                                                  dtype=torch.float)
+            nn.init.xavier_uniform_(initial_cluster_centers)
         else:
-            predicted[i] = 1
-    return predicted
+            initial_cluster_centers = cluster_centers
+        self.cluster_centers = nn.Parameter(initial_cluster_centers)
+
+    def forward(self, batch: torch.Tensor) -> torch.Tensor:
+        norm_squared = torch.sum(
+            (batch.unsqueeze(1) - self.cluster_centers)**2, 2)
+        numerator = 1.0 / (1.0 + (norm_squared / self.alpha))
+        power = float(self.alpha + 1) / 2
+        numerator = numerator**power
+        return numerator / torch.sum(numerator, dim=1, keepdim=True)
 
 
-def actual_labels_to_binary_labels(actual):
-    for i in range(len(actual)):
-        if actual[i] in config.normal_class_index_list:
-            actual[i] = 0
-        else:
-            actual[i] = 1
-    return actual
+class Encoder(nn.Module):
+    def __init__(self, cluster_type, height, width, n_components,
+                 n_hidden_features):
+        super(Encoder, self).__init__()
+        self.height = height
+        self.width = width
+        self.n_components = n_components
+        self.n_hidden_features = n_hidden_features
+        if (cluster_type == 'dec'):
+            self.dropout = nn.Dropout(p=0.1)
+            self.encoder_net = nn.Sequential(
+                nn.Linear(height * width, 500), nn.ReLU(), nn.Linear(500, 500),
+                nn.ReLU(), nn.Linear(500, 2000), nn.ReLU(),
+                nn.Linear(2000, n_hidden_features))
+
+        elif (cluster_type == 'cave'):
+            # convolutional sequence
+            print("")
+
+    def forward(self, x):
+        x = x.reshape(-1, self.height * self.width)
+        out = self.dropout(x)
+        out = self.encoder_net(out)
+        return out
+
+    def predict(self, x):
+        x = x.reshape(-1, self.heigt * self.width)
+        with torch.no_grad():
+            out = self.encoder_net(out)
+        return out
 
 
-# check only the set of with num of normal class list
-#  def binary_cluster_accuracy(y_true,
-#                              y_predicted,
-#                              cluster_number: Optional[int] = None):
-#      if cluster_number is None:
-#          cluster_number = max(y_predicted.max(),
-#                               y_true.max()) + 1  # assume labels are 0-indexed
-#
-#      cluster_indexes = [i for i in range(cluster_number)]
-#      num_of_normal_indexes = len(config.normal_class_index_list)
-#      combination_list = combinations(cluster_indexes, num_of_normal_indexes)
-#
-#      best_acc = 0.0
-#      best_combi = []
-#      reassigned_ind = []
-#      for combination in combination_list:
-#          # for each combination
-#          pred = []
-#          for i in range(len(y_true)):
-#              if (y_predicted[i] in combination):
-#                  pred.append(0)
-#              else:
-#                  pred.append(1)
-#          acc = accuracy_score(y_true, pred)
-#          if (acc > best_acc):
-#              best_acc = acc
-#              best_combi = combination
-#              reassigned_ind = pred
-#      return reassigned_ind, best_acc
+class Decoder(nn.Module):
+    def __init__(self, cluster_type, height, width, n_components,
+                 n_hidden_features):
+        super(Decoder, self).__init__()
+        self.height = height
+        self.width = width
+        self.n_components = n_components
+        self.n_hidden_features = n_hidden_features
+
+        if (cluster_type == 'dec'):
+            self.decoder_net = nn.Sequential(
+                nn.Linear(n_hidden_features, 2000), nn.ReLU(),
+                nn.Linear(2000, 500), nn.ReLU(), nn.Linear(500, 500),
+                nn.ReLU(), nn.Linear(500, height * width))
+
+    def forward(self, x):
+        out = self.decoder_net(x)
+        out = out.reshape(-1, 1, 28, 28)
+        return out
+
+    def predict(self, x):
+        with torch.nograd():
+            out = self.decoder_net(x)
+        out = out.reshape(-1, 1, 28, 28)
+        return out
+
+
+def cluster_accuracy(y_true, y_pred):
+    y_true = y_true.astype(np.int64)
+    assert y_pred.size == y_true.size
+    D = max(y_pred.max(), y_true.max()) + 1
+    w = np.zeros((D, D), dtype=np.int64)
+    for i in range(y_pred.size):
+        w[y_pred[i], y_true[i]] += 1
+    from scipy.optimize import linear_sum_assignment
+    ind = linear_sum_assignment(w.max() - w)
+    ind = np.asarray(ind)
+    ind = np.transpose(ind)
+    return sum([w[i, j] for i, j in ind]) * 1.0 / y_pred.size
+
+
+def target_distribution(batch: torch.Tensor) -> torch.Tensor:
+    weight = (batch**2) / torch.sum(batch, 0)
+    return (weight.t() / torch.sum(weight, 1)).t()
 
 
 # check all the possible combinations disregarding num of normal class list
@@ -173,16 +394,13 @@ def binary_cluster_accuracy(y_true,
     if cluster_number is None:
         cluster_number = max(y_predicted.max(),
                              y_true.max()) + 1  # assume labels are 0-indexed
-
     cluster_indexes = [i for i in range(cluster_number)]
     #  num_of_normal_indexes = len(config.normal_class_index_list)
-
     best_acc = 0.0
     best_combi = []
     reassigned_ind = []
     #  best_auc = 0.0
     #  best_combi_auc = []
-
     for num_of_normal_indexes in cluster_indexes:
         if (num_of_normal_indexes == 0 or num_of_normal_indexes == 1): continue
         combination_list = combinations(cluster_indexes, num_of_normal_indexes)
@@ -211,26 +429,24 @@ def binary_cluster_accuracy(y_true,
     return reassigned_ind, best_acc, best_combi
 
 
-class CachedData(Dataset):
-    def __init__(self, data_x, data_y, cuda, testing_mode=False):
-
-        if not cuda:
-            data_x.detach().cpu()
-            data_y.detach().cpu()
-        self.ds = TensorDataset(data_x, data_y)
-        self.cuda = cuda
-        self.testing_mode = testing_mode
-        self._cache = dict()
-
-    def __getitem__(self, index: int) -> torch.Tensor:
-        if index not in self._cache:
-            self._cache[index] = list(self.ds[index])
-            if self.cuda:
-                self._cache[index][0] = self._cache[index][0].cuda(
-                    non_blocking=True)
-                self._cache[index][1] = self._cache[index][1].cuda(
-                    non_blocking=True)
-        return self._cache[index]
-
-    def __len__(self) -> int:
-        return 128 if self.testing_mode else len(self.ds)
+# function for the dec training acc
+# TODO: need to make function that checks all the cases for each pred clusters to match the actual clusters
+# 00000
+# 00001
+# 00002 ...
+#  def dec_train_accuracy(y_true, y_predicted):
+#      pdb.set_trace()
+#      cluster_number = y_true.max() + 1
+#      hidden_dimension = y_predicted.max() + 1
+#
+#      cluster_indexes = [i for i in range(cluster_number)]
+#      best_acc = 0.0
+#      for num_of_normal_indexes in cluster_indexes:
+#          if (num_of_normal_indexes == 0 or num_of_normal_indexes == 1): continue
+#          combination_list = combinations(cluster_indexes, num_of_normal_indexes)
+#          for combination in combination_list:
+#              print(combination)
+#
+#  def recursive_pair_gen(y, n):
+#      if n>=1:
+#          for x in range(y)

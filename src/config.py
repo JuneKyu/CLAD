@@ -13,8 +13,7 @@ import torch
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
-    torch.cuda.set_device(2)
-    #  device = torch.device(2)
+    #  torch.cuda.set_device(2)
 else:
     device = torch.device("cpu")
 
@@ -45,7 +44,7 @@ implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'cifar10')
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
 implemented_nlp_embeddings = ('avg_bert', 's_bert')
 # embeddings to implement = 'avg_glove'
-implemented_cluster_models = ('gmm', 'dec', 'cvae')
+implemented_cluster_models = ('dec', 'cvae')
 
 implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn')
 # need to implement more...
