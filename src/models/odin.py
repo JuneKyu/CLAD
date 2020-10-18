@@ -28,7 +28,6 @@ def apply_odin(net, test_in, test_out):
     g1 = open(config.odin_in_path, "w")
     g2 = open(config.odin_out_path, "w")
 
-    #  pdb.set_trace()
     temper = config.odin_temperature
     noise_magnitude = config.odin_perturbation_magnitude
 

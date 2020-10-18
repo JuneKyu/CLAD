@@ -77,36 +77,46 @@ class Model(object):
         #      config.dec_train_epochs = config.reuters_dec_train_epochs
 
         #  run deep embedding clustering
-        cluster_model = DEC_Module(
-            train_x=self.train_x,
-            train_y=self.train_y,
-            batch_size=128,
-            cluster_type=self.cluster_type,
-            n_components=self.cluster_num,
-            n_hidden_features=10)  # need to be configurable
-        cluster_model.pretrain(epochs=500, lr=0.1, momentum=0.9)
-        cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
-        self.clusters, _ = cluster_model.predict()
-        self.clusters = self.clusters.numpy()
+        #  cluster_model = DEC_Module(
+        #      train_x=self.train_x,
+        #      train_y=self.train_y,
+        #      batch_size=128,
+        #      cluster_type=self.cluster_type,
+        #      n_components=self.cluster_num,
+        #      n_hidden_features=10)  # need to be configurable
+        #  # n_hidden_features for mnist is 10
+        #  # n_hidden_features for cifar 10 is ? 30
+        #
+        #  #  cluster_model.pretrain(epochs=500, lr=0.1,
+        #  #                         momentum=0.9)  # for linear dec module
+        #  cluster_model.pretrain(epochs=300, lr=0.001, momentum=0.9)
+        #  cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
+        #  self.clusters, _ = cluster_model.predict()
+        #  self.clusters = self.clusters.numpy()
 
-        #  if os.path.exists(config.temp_dec_cluster):
-        #      self.clusters = np.load(
-        #          os.path.join(config.temp_dec_cluster, "train_clusters.npy"))
-        #  else:
-        #      os.makedirs(config.temp_dec_cluster)
-        #      cluster_model = DEC_Module(
-        #          train_x=self.train_x,
-        #          train_y=self.train_y,
-        #          batch_size=128,
-        #          cluster_type=self.cluster_type,
-        #          n_components=self.cluster_num,
-        #          n_hidden_features=10)  # need to be configurable
-        #      cluster_model.pretrain(epochs=500, lr=0.1, momentum=0.9)
-        #      cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
-        #      self.clusters, _ = cluster_model.predict()
-        #      self.clusters = self.cluster.numpy()
-        #      np.save(os.path.join(config.temp_dec_cluster, "train_clusters"),
-        #              self.clusters)
+        if os.path.exists(config.temp_dec_cluster):
+            self.clusters = np.load(
+                os.path.join(config.temp_dec_cluster, "train_clusters.npy"))
+        else:
+            cluster_model = DEC_Module(
+                train_x=self.train_x,
+                train_y=self.train_y,
+                batch_size=config.dec_batch_size,  # 128
+                cluster_type=self.cluster_type,
+                n_components=self.cluster_num,
+                n_hidden_features=config.n_hidden_features)
+
+            cluster_model.pretrain(epochs=100, lr=0.01, momentum=0.9)
+            cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
+            #  cluster_model.pretrain(epochs=300, lr=0.001, momentum=0.9)
+            #  cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
+            #  cluster_model.pretrain(epochs=500, lr=0.001, momentum=0.9)
+            #  cluster_model.train(epochs=300, lr=0.001, momentum=0.9)
+            self.clusters, _ = cluster_model.predict()
+            self.clusters = self.clusters.numpy()
+            os.makedirs(config.temp_dec_cluster)
+            np.save(os.path.join(config.temp_dec_cluster, "train_clusters"),
+                    self.clusters)
 
     def classify_nn(self, dataset_name):
         log = config.logger
@@ -146,16 +156,15 @@ class Model(object):
                 classifier = Linear_classifier(self.train_x,
                                                self.clusters,
                                                n_epochs=3000,
-                                               lr=0.001)
+                                               lr=0.01)
             elif (classifier_name == 'fc3'):
                 classifier = FC3_classifier(self.train_x,
                                             self.clusters,
-                                            n_epochs=3000,
+                                            n_epochs=500,
                                             lr=0.001)
             elif (classifier_name == 'cnn'):  # for image data
                 batch_size = config.cnn_classifier_batch_size
                 is_rgb = config.is_rgb
-                pdb.set_trace()
                 classifier = CNN_classifier(self.train_x,
                                             self.clusters,
                                             n_epochs=100,

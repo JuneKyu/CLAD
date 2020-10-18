@@ -42,7 +42,6 @@ def SVM_classifier(gamma, C, train_data, train_label):
 
 # for basic test
 def Linear_classifier(train_data, train_cluster, n_epochs, lr):
-
     if (len(train_data) > 2):
         train_data = torch.reshape(train_data, (len(train_data), -1))
 
@@ -54,10 +53,7 @@ def Linear_classifier(train_data, train_cluster, n_epochs, lr):
 
     train_data = torch.from_numpy(train_data.astype(np.float32)).cuda(
         config.device)
-    #  test_data = torch.from_numpy(test_data.astype(np.float32))
-    #  pdb.set_trace()
     train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    #  test_cluster = torch.from_numpy(test_cluster)
 
     model = LinearClassification(input_dim=input_size).cuda(config.device)
     criterion = nn.CrossEntropyLoss()  # Log Softmax + ClassNLL Loss
@@ -81,7 +77,6 @@ def Linear_classifier(train_data, train_cluster, n_epochs, lr):
 
 # for basic test
 def FC3_classifier(train_data, train_cluster, n_epochs, lr):
-
     if (len(train_data) > 2):
         train_data = torch.reshape(train_data, (len(train_data), -1))
 
@@ -121,6 +116,9 @@ def CNN_classifier(train_data,
                    is_rgb=False):
 
     input_size = train_data.shape[0]
+    channels = train_data.shape[1]
+    height = train_data.shape[2]
+    width = train_data.shape[3]
     train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
     train = TensorDataset(train_data, train_cluster)
     train_loader = DataLoader(train,
@@ -128,7 +126,11 @@ def CNN_classifier(train_data,
                               shuffle=True,
                               drop_last=True)
 
-    model = CNNClassification(batch_size, is_rgb=is_rgb)
+    model = CNNClassification(batch_size,
+                              channels,
+                              height,
+                              width,
+                              is_rgb=is_rgb)
     model.to(config.device)
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=lr)
@@ -271,43 +273,3 @@ def GRU_text_classifier(train_data, train_label, test_data, test_label,
 #  def CNN_classifier(train_data, train_cluster, n_epochs, lr):
 
 #  check if the data is RGB or gray_scale
-
-
-def Linear_classifier(train_data, train_cluster, n_epochs, lr):
-
-    if (len(train_data) > 2):
-        train_data = torch.reshape(train_data, (len(train_data), -1))
-
-    _, input_size = train_data.shape
-
-    scaler = StandardScaler()
-    train_data = scaler.fit_transform(train_data)
-    #  test_data = scaler.fit_transform(test_data)
-
-    train_data = torch.from_numpy(train_data.astype(np.float32)).cuda(
-        config.device)
-    #  test_data = torch.from_numpy(test_data.astype(np.float32))
-    #  pdb.set_trace()
-    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    #  test_cluster = torch.from_numpy(test_cluster)
-
-    model = LinearClassification(input_dim=input_size).cuda(config.device)
-    criterion = nn.CrossEntropyLoss()  # Log Softmax + ClassNLL Loss
-    optimizer = Adam(model.parameters(), lr=lr)
-
-    train_losses = np.zeros(n_epochs)
-
-    for iter_ in range(n_epochs):
-        outputs = model(train_data)
-        outputs = torch.squeeze(outputs)
-        loss = criterion(outputs, train_cluster)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        # TODO: loss can be ploted
-        #  train_losses[iter_] = loss.item()
-        if (iter_ + 1) % 10 == 0:
-            print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-                                                                  n_epochs,
-                                                                  loss.item()))
-    return model

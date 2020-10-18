@@ -33,7 +33,10 @@ def main():
                         default=[0])  # get a list of normal class indexes
     parser.add_argument('--classifier', type=str, default='linear')
     parser.add_argument('--cluster_num', type=int, default=5)
+    parser.add_argument('--n_hidden_features', type=int, default=10)
     parser.add_argument('--cluster_type', type=str, default='gmm')
+    parser.add_argument('--temperature', type=float, default=1000)
+    parser.add_argument('--perterbation', type=float, default=0.001)
     #  parser.add_argument('--use_noise_labeling', type=bool, default='True')
     # dataset_name : 'swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb'
 
@@ -54,6 +57,7 @@ def main():
     config.classifier = classifier
 
     cluster_num = args.cluster_num
+    n_hidden_features = args.n_hidden_features
     cluster_type = args.cluster_type
     config.cluster_type = cluster_type
 
@@ -61,6 +65,10 @@ def main():
     normal_class_index_list = [int(i) for i in normal_class_index_list]
     config.normal_class_index_list = normal_class_index_list
     config.cluster_num = cluster_num
+    config.n_hidden_features = n_hidden_features
+
+    perterbation = args.perterbation
+    config.odin_perturbation_magnitude = perterbation
 
     # logger
     log = config.logger
@@ -96,6 +104,10 @@ def main():
 
     print("normal_class_index_list : {}".format(normal_class_index_list))
     log.info("normal_class_index_list : {}".format(normal_class_index_list))
+    print("n_hidden_features : {}".format(n_hidden_features))
+    log.info("n_hidden_features : {}".format(n_hidden_features))
+    print("perterbation : {}".format(perterbation))
+    log.info("perterbation : {}".format(perterbation))
 
     # loading dataset
     dataset = load_dataset(dataset_name=dataset_name, data_path=data_path)

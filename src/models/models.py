@@ -20,17 +20,20 @@ class LinearClassification(nn.Module):
         super().__init__()
         self.out_features_dim = config.cluster_num
         self.linear = nn.Linear(input_dim, self.out_features_dim)
-        #  self.softmax = nn.Softmax(self.out_features_dim)
 
     def forward(self, input_dim):
-        if (len(input_dim.shape) >= 2):
+        if (len(input_dim.shape) >= 4):
             input_dim = torch.reshape(input_dim, (len(input_dim), -1))
-        #  return torch.unsqueeze(self.linear(input_dim), 0)
+        elif (len(input_dim.shape) >= 3):
+            input_dim = torch.reshape(input_dim, (1, -1))
+
         return self.linear(input_dim)
 
     def predict(self, input_dim):
-        if (len(input_dim.shape) >= 2):
+        if (len(input_dim.shape) >= 4):
             input_dim = torch.reshape(input_dim, (len(input_dim), -1))
+        elif (len(input_dim.shape) >= 3):
+            input_dim = torch.reshape(input_dim, (1, -1))
 
         predicted = []
         with torch.no_grad():
@@ -52,8 +55,10 @@ class FC3Classification(nn.Module):
         self.linear3 = nn.Linear(input_dim, self.out_features_dim)
 
     def forward(self, input_dim):
-        if (len(input_dim.shape) >= 2):
+        if (len(input_dim.shape) >= 4):
             input_dim = torch.reshape(input_dim, (len(input_dim), -1))
+        elif (len(input_dim.shape) >= 3):
+            input_dim = torch.reshape(input_dim, (1, -1))
         output1 = self.linear1(input_dim)
         output2 = self.linear2(output1)
         output3 = self.linear3(output2)
@@ -61,8 +66,10 @@ class FC3Classification(nn.Module):
         #  return torch.unsqueeze(output3, 0)
 
     def predict(self, input_dim):
-        if (len(input_dim.shape) >= 2):
+        if (len(input_dim.shape) >= 4):
             input_dim = torch.reshape(input_dim, (len(input_dim), -1))
+        elif (len(input_dim.shape) >= 3):
+            input_dim = torch.reshape(input_dim, (1, -1))
         predicted = []
         with torch.no_grad():
             out_features1 = self.linear1(input_dim)
@@ -78,27 +85,31 @@ class FC3Classification(nn.Module):
 
 # for image data
 class CNNClassification(nn.Module):
-    def __init__(self, batch_size, is_rgb=True):
+    def __init__(self, batch_size, channels, height, width, is_rgb=True):
         super(CNNClassification, self).__init__()
+        self.batch_size = batch_size
+        self.channels = channels
+        self.height = height
+        self.width = width
+        self.out_features_dim = config.cluster_num
         if (is_rgb):
             self.color_factor = 3
         else:
             self.color_factor = 1
-        self.out_features_dim = config.cluster_num
-        self.batch_size = batch_size
         self.layer = nn.Sequential(
             nn.Conv2d(self.color_factor, 16, 3, padding=1), nn.BatchNorm2d(16),
             nn.ReLU(), nn.Conv2d(16, 32, 3, padding=1), nn.BatchNorm2d(32),
             nn.ReLU(), nn.MaxPool2d(2, 2), nn.Conv2d(32, 64, 3, padding=1),
             nn.BatchNorm2d(64), nn.ReLU(), nn.MaxPool2d(2, 2))
-        self.fc_layer = nn.Sequential(nn.Linear(64 * 7 * 7, 128),
-                                      nn.BatchNorm1d(128), nn.ReLU(),
-                                      nn.Linear(128, 64), nn.BatchNorm1d(64),
-                                      nn.ReLU(),
-                                      nn.Linear(64, self.out_features_dim))
+        self.fc_layer = nn.Sequential(
+            nn.Linear(64 * (self.height // 4) * (self.width // 4), 128),
+            nn.BatchNorm1d(128), nn.ReLU(), nn.Linear(128, 64),
+            nn.BatchNorm1d(64), nn.ReLU(), nn.Linear(64,
+                                                     self.out_features_dim))
 
     def forward(self, x):
-        if (len(x.shape) < 4): x = x.reshape(1, 1, 28, 28)
+        if (len(x.shape) < 4):
+            x = x.reshape(1, self.channels, self.height, self.width)
         out = self.layer(x)
         if (x.shape[0] == 1):
             out = out.view(1, -1)

@@ -18,6 +18,8 @@ import pdb
 
 import config
 
+log = config.logger
+
 
 def set_data(train_x, train_y, batch_size=32):
 
@@ -36,6 +38,11 @@ def init_weights(m):
     if (isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear)):
         nn.init.xavier_uniform_(m.weight)
         nn.init.constant_(m.bias, 0)
+
+
+class Flatten(nn.Module):
+    def forward(self, input):
+        return input.reshape(input.size(0), -1)
 
 
 class DEC_Module():
@@ -81,8 +88,8 @@ class DEC_Module():
             true_labels.extend(label)
         true_labels = np.array(true_labels)
         km = KMeans(n_clusters=len(np.unique(true_labels)),
-                    n_init=20,
-                    n_jobs=4)
+                    n_init=max(20, self.n_hidden_features),
+                    n_jobs=-1)
         y_pred = km.fit_predict(test_x)
         acc = cluster_accuracy(true_labels, y_pred)
         return acc
@@ -98,8 +105,8 @@ class DEC_Module():
             true_labels.extend(label)
         true_labels = np.array(true_labels)
         km = KMeans(n_clusters=len(np.unique(true_labels)),
-                    n_init=20,
-                    n_jobs=4)
+                    n_init=max(20, self.n_hidden_features),
+                    n_jobs=-1)
         y_pred = km.fit_predict(test_x)
         acc = cluster_accuracy(true_labels, y_pred)
         return acc
@@ -108,9 +115,9 @@ class DEC_Module():
         self.encoder.to(config.device)
         self.decoder.to(config.device)
         #  gradient clipping
-        #  max_grad_norm = 1.
-        #  torch_utils.clip_grad_norm_(self.encoder.parameters(), max_grad_norm)
-        #  torch_utils.clip_grad_norm_(self.decoder.parameters(), max_grad_norm)
+        max_grad_norm = 1.
+        torch_utils.clip_grad_norm_(self.encoder.parameters(), max_grad_norm)
+        torch_utils.clip_grad_norm_(self.decoder.parameters(), max_grad_norm)
 
         loss_function = nn.MSELoss()
         loss_value = 0
@@ -150,8 +157,9 @@ class DEC_Module():
                     epoch=epoch,
                     loss='%.6f' % loss_value,
                 )
-            acc = self.acc_pretrain(self.encoder, self.decoder)
-            print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
+            if (epoch % 50 == 0):
+                acc = self.acc_pretrain(self.encoder, self.decoder)
+                print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
         print("pretraining autoencoder ended.")
 
     def train(self, epochs, lr, momentum):
@@ -167,7 +175,9 @@ class DEC_Module():
                                  'acc': '%.4f' % 0.0,
                                  'loss': '%.6f' % 0.0,
                              })
-        km = KMeans(n_clusters=self.n_components, n_init=20, n_jobs=4)
+        km = KMeans(n_clusters=self.n_components,
+                    n_init=max(20, self.n_hidden_features),
+                    n_jobs=-1)
         self.dec.train()
         self.dec.to(config.device)
         features = []
@@ -194,17 +204,17 @@ class DEC_Module():
         loss_function = nn.KLDivLoss(size_average=False)
         delta_label = None
         for epoch in range(epochs):
-            print(epoch)
             features = []
-            data_iterator = tqdm(self.dataloader,
-                                 leave='True',
-                                 unit='batch',
-                                 postfix={
-                                     'epoch': epoch,
-                                     'acc': '%.4f' % (accuracy or 0.0),
-                                     'loss': '%.8f' % 0.0,
-                                     'dlb': '%.4f' % (delta_label or 0.0)
-                                 })
+            data_iterator = tqdm(
+                self.dataloader,
+                leave='True',
+                unit='batch',
+                postfix={
+                    'epoch': epoch,
+                    #  'acc': '%.4f' % (accuracy or 0.0),
+                    'loss': '%.8f' % 0.0,
+                    'dlb': '%.4f' % (delta_label or 0.0)
+                })
             self.dec.train()
             for index, batch in enumerate(data_iterator):
                 if ((isinstance(batch, tuple) or isinstance(batch, list))
@@ -214,10 +224,11 @@ class DEC_Module():
                 output = self.dec(batch)
                 target = target_distribution(output).detach()
                 loss = loss_function(output.log(), target) / output.shape[0]
-                data_iterator.set_postfix(epoch=epoch,
-                                          acc='%.4f' % (accuracy or 0.0),
-                                          loss='%.8f' % float(loss.item()),
-                                          dlb='%.4f' % (delta_label or 0.0))
+                data_iterator.set_postfix(
+                    epoch=epoch,
+                    #  acc='%.4f' % (accuracy or 0.0),
+                    loss='%.8f' % float(loss.item()),
+                    dlb='%.4f' % (delta_label or 0.0))
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step(closure=None)
@@ -226,7 +237,7 @@ class DEC_Module():
                     loss_value = float(loss.item())
                     data_iterator.set_postfix(
                         epoch=epoch,
-                        acc='%.4f' % (accuracy or 0.0),
+                        #  acc='%.4f' % (accuracy or 0.0),
                         loss='%.8f' % loss_value,
                         dlb='%.4f' % (delta_label or 0.0),
                     )
@@ -240,20 +251,24 @@ class DEC_Module():
                     % (delta_label, self.stopping_delta))
                 break
             predicted_previous = predicted
-            accuracy = self.acc_train(self.dec)
-
+            if (epoch % 10 == 0):
+                accuracy = self.acc_train(self.dec)
+                print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
+                log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
+        self.encoder = self.dec.encoder
         print("training dec ended.")
 
     def predict(self):
-        data_iterator = tqdm(
-            self.dataloader,
-            leave=True,
-            unit='batch',
-        )
+        #  data_iterator = tqdm(
+        #      self.dataloader,
+        #      leave=True,
+        #      unit='batch',
+        #  )
         features = []
         actual = []
         self.dec.eval()
-        for batch in data_iterator:
+        #  for batch in data_iterator:
+        for batch in self.dataloader:
             if ((isinstance(batch, tuple) or isinstance(batch, list))
                     and len(batch) == 2):
                 batch, value = batch
@@ -312,8 +327,12 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.height = height
         self.width = width
+        self.cluster_type = cluster_type
         self.n_components = n_components
         self.n_hidden_features = n_hidden_features
+        self.channels = config.cvae_channel
+        self.ksize = config.cvae_kernel_size
+
         if (cluster_type == 'dec'):
             self.dropout = nn.Dropout(p=0.1)
             self.encoder_net = nn.Sequential(
@@ -321,18 +340,83 @@ class Encoder(nn.Module):
                 nn.ReLU(), nn.Linear(500, 2000), nn.ReLU(),
                 nn.Linear(2000, n_hidden_features))
 
-        elif (cluster_type == 'cave'):
-            # convolutional sequence
-            print("")
+        elif (cluster_type == 'cvae'):
+            self.dropout = nn.Dropout(p=0.1)
+            self.encoder_net = nn.Sequential(
+                nn.Conv2d(in_channels=self.channels,
+                          out_channels=self.channels * 4,
+                          kernel_size=self.ksize,
+                          stride=1,
+                          padding=self.ksize // 2), nn.ReLU(), nn.MaxPool2d(2),
+                nn.Conv2d(in_channels=self.channels * 4,
+                          out_channels=self.channels * 8,
+                          kernel_size=self.ksize,
+                          stride=1,
+                          padding=self.ksize // 2), nn.ReLU(), nn.MaxPool2d(2),
+                nn.Conv2d(in_channels=self.channels * 8,
+                          out_channels=self.channels * 16,
+                          kernel_size=self.ksize,
+                          stride=1,
+                          padding=self.ksize // 2), nn.ReLU(), Flatten(),
+                nn.Linear((self.height // (2**2)) * (self.width // (2**2)) *
+                          self.channels * 16, 512), nn.ReLU(),
+                nn.Linear(512, self.n_hidden_features))
+            #      nn.Conv2d(in_channels=self.channels,
+            #                out_channels=self.channels * 16,
+            #                kernel_size=self.ksize,
+            #                stride=1,
+            #                padding=self.ksize // 2),
+            #      nn.ELU(),
+            #      nn.Conv2d(in_channels=self.channels * 16,
+            #                out_channels=self.channels * 16,
+            #                kernel_size=self.ksize,
+            #                stride=1,
+            #                padding=self.ksize // 2),
+            #      nn.ELU(),
+            #      nn.MaxPool2d(2),
+            #      nn.Conv2d(in_channels=self.channels * 16,
+            #                out_channels=self.channels * 32,
+            #                kernel_size=self.ksize,
+            #                stride=1,
+            #                padding=self.ksize // 2),
+            #      nn.ELU(),
+            #      nn.Conv2d(in_channels=self.channels * 32,
+            #                out_channels=self.channels * 32,
+            #                kernel_size=self.ksize,
+            #                stride=1,
+            #                padding=self.ksize // 2),
+            #      nn.ELU(),
+            #      nn.MaxPool2d(2),
+            #      nn.Conv2d(in_channels=self.channels * 32,
+            #                out_channels=self.channels * 64,
+            #                kernel_size=self.ksize,
+            #                stride=1,
+            #                padding=self.ksize // 2),
+            #      nn.ELU(),
+            #      nn.Conv2d(in_channels=self.channels * 64,
+            #                out_channels=self.channels * 64,
+            #                kernel_size=self.ksize,
+            #                stride=1,
+            #                padding=self.ksize // 2),
+            #      nn.ELU(),
+            #      Flatten(),
+            #      nn.Linear((self.height // (2**2)) * (self.width // (2**2)) *
+            #                self.channels * 64, 512),
+            #      nn.ELU(),
+            #      nn.Linear(512, self.n_hidden_features))
+            #  #  nn.Linear((self.height // (2**2)) * (self.width // (2**2)) *
+            #  #            self.channels * 64, self.n_hidden_features))
 
     def forward(self, x):
-        x = x.reshape(-1, self.height * self.width)
+        if (self.cluster_type == 'dec'):
+            x = x.reshape(-1, self.height * self.width)
         out = self.dropout(x)
         out = self.encoder_net(out)
         return out
 
     def predict(self, x):
-        x = x.reshape(-1, self.heigt * self.width)
+        if (self.cluster_type == 'dec'):
+            x = x.reshape(-1, self.heigt * self.width)
         with torch.no_grad():
             out = self.encoder_net(out)
         return out
@@ -344,8 +428,11 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.height = height
         self.width = width
+        self.cluster_type = cluster_type
         self.n_components = n_components
         self.n_hidden_features = n_hidden_features
+        self.channels = config.cvae_channel
+        self.ksize = config.cvae_kernel_size
 
         if (cluster_type == 'dec'):
             self.decoder_net = nn.Sequential(
@@ -353,15 +440,105 @@ class Decoder(nn.Module):
                 nn.Linear(2000, 500), nn.ReLU(), nn.Linear(500, 500),
                 nn.ReLU(), nn.Linear(500, height * width))
 
+        elif (cluster_type == 'cvae'):
+            self.decoder_dense = nn.Sequential(
+                #  #  nn.Linear(self.n_hidden_features, (self.height // (2**2)) *
+                #  #            (self.width // (2**2)) * self.channels * 64),
+                #  #  nn.ELU(),
+                #  nn.Linear(self.n_hidden_features, 512),
+                #  nn.ELU(),
+                #  nn.Linear(512, (self.height // (2**2)) *
+                #            (self.width // (2**2)) * self.channels * 64),
+                #  nn.ELU(),
+                nn.Linear(self.n_hidden_features, 512),
+                nn.ReLU(),
+                nn.Linear(512, (self.height // (2**2)) *
+                          (self.width // (2**2)) * self.channels * 16),
+                nn.ReLU(),
+            )
+            self.decoder_net = nn.Sequential(
+                nn.ConvTranspose2d(in_channels=self.channels * 16,
+                                   out_channels=self.channels * 8,
+                                   kernel_size=self.ksize + 1,
+                                   stride=2,
+                                   padding=1),
+                nn.ReLU(),
+                nn.ConvTranspose2d(in_channels=self.channels * 8,
+                                   out_channels=self.channels * 4,
+                                   kernel_size=self.ksize + 1,
+                                   stride=2,
+                                   padding=1),
+                nn.ReLU(),
+                nn.Conv2d(in_channels=self.channels * 4,
+                          out_channels=self.channels,
+                          kernel_size=self.ksize,
+                          stride=1,
+                          padding=self.ksize // 2),
+                #  nn.Conv2d(in_channels=self.channels * 64,
+                #            out_channels=self.channels * 64,
+                #            kernel_size=self.ksize,
+                #            stride=1,
+                #            padding=self.ksize // 2),
+                #  nn.ELU(),
+                #  nn.ConvTranspose2d(in_channels=self.channels * 64,
+                #                     out_channels=self.channels * 32,
+                #                     kernel_size=self.ksize + 1,
+                #                     stride=2,
+                #                     padding=1),
+                #  nn.ELU(),
+                #  nn.Conv2d(in_channels=self.channels * 32,
+                #            out_channels=self.channels * 32,
+                #            kernel_size=self.ksize,
+                #            stride=1,
+                #            padding=self.ksize // 2),
+                #  nn.ELU(),
+                #  nn.ConvTranspose2d(in_channels=self.channels * 32,
+                #                     out_channels=self.channels * 16,
+                #                     kernel_size=self.ksize + 1,
+                #                     stride=2,
+                #                     padding=1),
+                #  nn.ELU(),
+                #  nn.Conv2d(in_channels=self.channels * 16,
+                #            out_channels=self.channels * 16,
+                #            kernel_size=self.ksize,
+                #            stride=1,
+                #            padding=self.ksize // 2),
+                #  nn.ELU(),
+                #  nn.Conv2d(in_channels=self.channels * 16,
+                #            out_channels=self.channels,
+                #            kernel_size=self.ksize,
+                #            stride=1,
+                #            padding=self.ksize // 2),
+                nn.Sigmoid(),
+            )
+
     def forward(self, x):
-        out = self.decoder_net(x)
-        out = out.reshape(-1, 1, 28, 28)
+        if (self.cluster_type == 'dec'):
+            out = self.decoder_net(x)
+        if (self.cluster_type == 'cvae'):
+            out = self.decoder_dense(x)
+            #  out = out.reshape(out.size(0), self.channels * 64,
+            #                    (self.height // (2**2)), (self.height // (2**2)))
+            out = out.reshape(out.size(0), self.channels * 16,
+                              (self.height // (2**2)), (self.height // (2**2)))
+            out = self.decoder_net(out)
+        out = out.reshape(-1, self.channels, self.height, self.width)
         return out
 
     def predict(self, x):
         with torch.nograd():
-            out = self.decoder_net(x)
-        out = out.reshape(-1, 1, 28, 28)
+            if (self.cluster_type == 'dec'):
+                out = self.decoder_net(x)
+            if (self.cluster_type == 'cvae'):
+                out = self.decoder_dense(x)
+                #  out = out.reshape(out.size(0), self.channels * 64,
+                #                    (self.height // (2**2)),
+                #                    (self.height // (2**2)))
+                out = out.reshape(out.size(0), self.channels * 16,
+                                  (self.height // (2**2)),
+                                  (self.height // (2**2)))
+                out = self.decoder_net(out)
+        out = out.reshape(-1, self.channels, self.height, self.width)
         return out
 
 

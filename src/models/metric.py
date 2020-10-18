@@ -263,8 +263,8 @@ def calculate_metric(nn):
     #  tpr95Base, tpr95Odin = tpr95(nn)
     auprInBase, auprInOdin = auprIn(nn)
     auprOutBase, auprOutOdin = auprOut(nn)
-    print("Base, Odin")
-    log.info("Base, Odin")
+    print("                   Base,     Odin")
+    log.info("                   Base,     Odin")
     print("auroc : {:15.2f}   , {:3.2f}".format(aurocBase * 100,
                                                 aurocOdin * 100))
     log.info("auroc : {:15.2f}   , {:3.2f}".format(aurocBase * 100,
