@@ -1,15 +1,8 @@
-pip install sentence-transformers
 pip install pandas
+pip install scipy
+pip install sklearn
 pip install wget
+pip install torch torchvision
 pip install pytorch-nlp
-pip install torchvision
-
-ptdae install:
-git clone https://github.com/vlukiyanov/pt-sdae.git
-cd pt-sdae
-python setup.py install
-
-ptdec install:
-git clone https://github.com/vlukiyanov/pt-dec.git
-cd pt-dec
-python setup.py install
+pip install transformers
+pip install sentence-transformers

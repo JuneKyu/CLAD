@@ -51,49 +51,49 @@
 # python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.001
 # python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.00001
 
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 --temperature 1000 --perterbation 0.00001
-
-rm ../../data/temp_dec -rf
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 8 --temperature 1000 --perterbation 0.001
-python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 8 --temperature 1000 --perterbation 0.001
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 --temperature 1000 --perterbation 0.00001
+#
+# rm ../../data/temp_dec -rf
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'linear' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 8 --temperature 1000 --perterbation 0.001
+# python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'fc3' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 8 --temperature 1000 --perterbation 0.001
 python ../main.py --data_path '../../data' --dataset_name 'cifar10' --cluster_type 'cvae_temp' --dec_pretrain_epochs 100 --dec_train_epochs 100 --classifier 'cnn' --cluster_num 10 --n_hidden_features 5 --normal_class_index_list 0 1 2 3 4 5 6 7 8 --temperature 1000 --perterbation 0.00001
 
 
