@@ -31,12 +31,16 @@ def main():
                         default='sentence_embedding')
     parser.add_argument('--normal_class_index_list', nargs='+',
                         default=[0])  # get a list of normal class indexes
-    parser.add_argument('--classifier', type=str, default='linear')
     parser.add_argument('--cluster_num', type=int, default=5)
     parser.add_argument('--n_hidden_features', type=int, default=10)
     parser.add_argument('--cluster_type', type=str, default='gmm')
+    parser.add_argument('--dec_pretrain_epochs', type=int, default=100)
+    parser.add_argument('--dec_train_epochs', type=int, default=100)
+    parser.add_argument('--classifier', type=str, default='linear')
+    #  parser.add_argument()
     parser.add_argument('--temperature', type=float, default=1000)
     parser.add_argument('--perterbation', type=float, default=0.001)
+
     #  parser.add_argument('--use_noise_labeling', type=bool, default='True')
     # dataset_name : 'swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb'
 
@@ -47,7 +51,7 @@ def main():
     # data_name
     dataset_name = args.dataset_name
     # if text data, set sentence embedding
-    config.sentence_embedding = args.sentence_embedding
+    config.sentence_embeddingm = args.sentence_embedding
     # if image data, set rgb flag
     if (dataset_name in config.rgb_datasets):
         config.is_rgb = True
@@ -60,6 +64,10 @@ def main():
     n_hidden_features = args.n_hidden_features
     cluster_type = args.cluster_type
     config.cluster_type = cluster_type
+    dec_pretrain_epochs = args.dec_pretrain_epochs
+    config.dec_pretrain_epochs = dec_pretrain_epochs
+    dec_train_epochs = args.dec_train_epochs
+    config.dec_train_epochs = dec_train_epochs
 
     normal_class_index_list = args.normal_class_index_list
     normal_class_index_list = [int(i) for i in normal_class_index_list]

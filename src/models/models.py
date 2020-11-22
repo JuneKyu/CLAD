@@ -131,3 +131,64 @@ class CNNClassification(nn.Module):
                 predicted.append(
                     np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
         return predicted
+
+
+# for image data
+class CNNLargeClassification(nn.Module):
+    def __init__(self, batch_size, channels, height, width, is_rgb=True):
+        super(CNNLargeClassification, self).__init__()
+        self.batch_size = batch_size
+        self.channels = channels
+        self.height = height
+        self.width = width
+        self.out_features_dim = config.cluster_num
+        #  if (is_rgb):
+        #      self.color_factor = 3
+        #  else:
+        #      self.color_factor = 1
+        self.layer = nn.Sequential(
+            nn.Conv2d(in_channels=self.channels,
+                      out_channels=self.channels * 8,
+                      kernel_size=3,
+                      padding=1), nn.BatchNorm2d(self.channels * 8), nn.ELU(),
+            nn.Conv2d(in_channels=self.channels * 8,
+                      out_channels=self.channels * 16,
+                      kernel_size=3,
+                      padding=1), nn.BatchNorm2d(self.channels * 16), nn.ELU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(in_channels=self.channels * 16,
+                      out_channels=self.channels * 32,
+                      kernel_size=3,
+                      padding=1), nn.BatchNorm2d(self.channels * 32),
+            nn.ReLU(), nn.MaxPool2d(2, 2))
+        self.fc_layer = nn.Sequential(
+            nn.Linear(
+                self.channels * 32 * (self.height // 4) * (self.width // 4),
+                128), nn.BatchNorm1d(128), nn.ReLU(), nn.Linear(128, 64),
+            nn.BatchNorm1d(64), nn.ReLU(), nn.Linear(64,
+                                                     self.out_features_dim))
+
+    def forward(self, x):
+        if (len(x.shape) < 4):
+            x = x.reshape(1, self.channels, self.height, self.width)
+        out = self.layer(x)
+        if (x.shape[0] == 1):
+            out = out.view(1, -1)
+        else:
+            out = out.view(self.batch_size, -1)
+        out = self.fc_layer(out)
+        return out
+
+    def predict(self, input_dim):
+        predicted = []
+        with torch.no_grad():
+            # data size adjustment
+            out = self.layer(input_dim)
+            out = out.view(input_dim.shape[0], -1)
+            out = self.fc_layer(out)
+            predict_sm = F.softmax(out)
+            predict_sm = predict_sm.detach().cpu().numpy()
+            for i in range(len(predict_sm)):
+                predicted.append(
+                    np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+        return predicted

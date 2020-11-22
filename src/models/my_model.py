@@ -1,5 +1,5 @@
 from .deep_embedding_clustering import DEC_Module
-from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier
+from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier, CNN_large_classifier
 from config import implemented_cluster_models, implemented_classifier_models
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from itertools import combinations
@@ -106,12 +106,16 @@ class Model(object):
                 n_components=self.cluster_num,
                 n_hidden_features=config.n_hidden_features)
 
-            cluster_model.pretrain(epochs=100, lr=0.01, momentum=0.9)
-            cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
-            #  cluster_model.pretrain(epochs=300, lr=0.001, momentum=0.9)
+            #  TODO : hyperparameters should be configured.
+
+            # mnist - dec
+            #  cluster_model.pretrain(epochs=100, lr=0.01, momentum=0.9)
             #  cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
-            #  cluster_model.pretrain(epochs=500, lr=0.001, momentum=0.9)
-            #  cluster_model.train(epochs=300, lr=0.001, momentum=0.9)
+
+            # mnist - conv-dec
+            print("conv-dec")
+            cluster_model.pretrain(epochs=100)
+            cluster_model.train(epochs=100)
             self.clusters, _ = cluster_model.predict()
             self.clusters = self.clusters.numpy()
             os.makedirs(config.temp_dec_cluster)
@@ -153,24 +157,37 @@ class Model(object):
             elif (classifier_name == 'svm'):
                 print("")
             elif (classifier_name == 'linear'):
-                classifier = Linear_classifier(self.train_x,
-                                               self.clusters,
-                                               n_epochs=3000,
-                                               lr=0.01)
+                classifier = Linear_classifier(
+                    self.train_x,
+                    self.clusters,
+                    n_epochs=config.linear_classifier_epochs,
+                    lr=config.linear_classifier_lr)
             elif (classifier_name == 'fc3'):
-                classifier = FC3_classifier(self.train_x,
-                                            self.clusters,
-                                            n_epochs=500,
-                                            lr=0.001)
+                classifier = FC3_classifier(
+                    self.train_x,
+                    self.clusters,
+                    n_epochs=config.fc3_classifier_epochs,
+                    lr=config.fc3_classifier_lr)
             elif (classifier_name == 'cnn'):  # for image data
                 batch_size = config.cnn_classifier_batch_size
                 is_rgb = config.is_rgb
-                classifier = CNN_classifier(self.train_x,
-                                            self.clusters,
-                                            n_epochs=100,
-                                            lr=0.001,
-                                            batch_size=batch_size,
-                                            is_rgb=is_rgb)
+                classifier = CNN_classifier(
+                    self.train_x,
+                    self.clusters,
+                    n_epochs=config.cnn_classifier_epochs,
+                    lr=config.cnn_classifier_lr,
+                    batch_size=batch_size,
+                    is_rgb=is_rgb)
+            elif (classifier_name == 'cnn_large'):
+                batch_size = config.cnn_large_classifier_batch_size
+                is_rgb = config.is_rgb
+                classifier = CNN_large_classifier(
+                    self.train_x,
+                    self.clusters,
+                    n_epochs=config.cnn_large_classifier_epochs,
+                    lr=config.cnn_large_classifier_lr,
+                    batch_size=batch_size,
+                    is_rgb=is_rgb)
 
             train_pred = classifier.predict(self.train_x.cuda(config.device))
             train_accuracy = accuracy_score(train_pred, self.clusters)

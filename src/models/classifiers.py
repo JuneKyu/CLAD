@@ -17,6 +17,8 @@ from torch.utils.data import TensorDataset, DataLoader
 from models.models import LinearClassification
 from models.models import FC3Classification
 from models.models import CNNClassification
+from models.models import CNNLargeClassification
+
 import config
 
 import pdb
@@ -134,6 +136,7 @@ def CNN_classifier(train_data,
     model.to(config.device)
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=lr)
+    #  optimizer = Adam(model.parameters())
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
                                                threshold=0.1,
                                                patience=1,
@@ -151,11 +154,66 @@ def CNN_classifier(train_data,
             optimizer.step()
         scheduler.step(loss)
 
-        if (iter_ + 1) % 10 == 0:
-            print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-                                                                  n_epochs,
-                                                                  loss.item()))
+        #  if (iter_ + 1) % 10 == 0:
+        #      print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
+        #                                                            n_epochs,
+        #                                                            loss.item()))
+        print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
+                                                              n_epochs,
+                                                              loss.item()))
+    return model
 
+
+def CNN_large_classifier(train_data,
+                         train_cluster,
+                         n_epochs,
+                         lr,
+                         batch_size=100,
+                         is_rgb=False):
+
+    input_size = train_data.shape[0]
+    channels = train_data.shape[1]
+    height = train_data.shape[2]
+    width = train_data.shape[3]
+    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
+    train = TensorDataset(train_data, train_cluster)
+    train_loader = DataLoader(train,
+                              batch_size=batch_size,
+                              shuffle=True,
+                              drop_last=True)
+
+    model = CNNLargeClassification(batch_size,
+                                   channels,
+                                   height,
+                                   width,
+                                   is_rgb=is_rgb)
+    model.to(config.device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = Adam(model.parameters(), lr=lr)
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
+                                               threshold=0.1,
+                                               patience=1,
+                                               mode='min')
+
+    for iter_ in range(n_epochs):
+        for _, [image, label] in enumerate(train_loader):
+            image = image.to(config.device)
+            label = label.to(config.device)
+            outputs = model(image)
+
+            loss = criterion(outputs, label)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        scheduler.step(loss)
+
+        #  if (iter_ + 1) % 10 == 0:
+        #      print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
+        #                                                            n_epochs,
+        #                                                            loss.item()))
+        print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
+                                                              n_epochs,
+                                                              loss.item()))
     return model
 
 

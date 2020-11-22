@@ -5,7 +5,21 @@ import datetime
 import logging
 import os
 
+import numpy as np
 import torch
+import random
+
+# -------------------------------
+# randomness control
+# -------------------------------
+
+random_seed = 777
+
+torch.manual_seed(random_seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+np.random.seed(random_seed)
+random.seed(random_seed)
 
 # -------------------------------
 # cuda configuration
@@ -43,9 +57,10 @@ implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'cifar10')
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
 implemented_nlp_embeddings = ('avg_bert', 's_bert')
 # embeddings to implement = 'avg_glove'
-implemented_cluster_models = ('dec', 'cvae')
+implemented_cluster_models = ('dec', 'cvae_base', 'cvae_large', 'cvae_temp')
 
-implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn')
+implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn',
+                                 'cnn_large')
 # need to implement more...
 
 # -------------------------------
@@ -100,16 +115,12 @@ dec_pretrain_momentum = 0.9
 # dec_pretrain_decay_rate = 0.1
 
 # finetune
-dec_finetune_epochs = 500
-dec_finetune_lr = 0.1
-dec_finetune_momentum = 0.9
-dec_finetune_decay_step = 100
-dec_finetune_decay_rate = 0.1
 
 # dec training stage
+dec_pretrain_epochs = 100
 dec_train_epochs = 100
-dec_train_lr = 0.01
-dec_train_momentum = 0.9
+#  dec_train_lr = 0.01
+#  dec_train_momentum = 0.9
 
 # reuters
 #  reuters_dec_finetune_epochs = 800
@@ -136,7 +147,6 @@ dec_train_momentum = 0.9
 #  cifar10_dec_train_lr = 0.001
 
 # cvae + dec_clustering
-
 cvae_channel = 1
 cvae_z_dim = 128
 cvae_kernel_size = 3
@@ -169,9 +179,38 @@ text_classifier_epoch = 10
 
 text_classifier_batch_size = 1024
 
+# for mnist
+linear_classifier_epochs = 200
+linear_classifier_lr = 0.0001
+
+# for cifar10
+#  linear_classifier_epochs = 5000
+#  linear_classifier_lr = 0.001
+
+# mnist
+fc3_classifier_epochs = 100
+fc3_classifier_lr = 0.00001
+
+# for cifar10
+#  fc3_classifier_epochs = 1000
+#  fc3_classifier_lr = 0.001
+
+# for mnist
+#  cnn_classifier_batch_size = 100
+#  cnn_classifier_epochs = 100
+#  cnn_classifier_lr = 0.00001
+#  is_rgb = False
+
+# for cifar10
 cnn_classifier_batch_size = 100
+cnn_classifier_epochs = 100
+cnn_classifier_lr = 0.00001
 is_rgb = False
 
+#  cnn_large_classifier_batch_size = 100
+#  cnn_large_classifier_epochs = 100
+#  cnn_large_classifier_lr = 0.0001
+#
 # -------------------------------
 # ood detector configuration
 # -------------------------------
