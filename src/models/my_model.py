@@ -131,7 +131,8 @@ class Model(object):
                                            self.clusters,
                                            n_epochs=5000,
                                            lr=0.001)
-            train_pred = classifier.predict(self.train_x.cuda(config.device))
+            train_pred = classifier.module.predict(
+                self.train_x.cuda(config.device))
             train_accuracy = accuracy_score(train_pred, self.clusters)
 
             print(
@@ -189,7 +190,8 @@ class Model(object):
                     batch_size=batch_size,
                     is_rgb=is_rgb)
 
-            train_pred = classifier.predict(self.train_x.cuda(config.device))
+            train_pred = classifier.module.predict(
+                self.train_x.cuda(config.device))
             train_accuracy = accuracy_score(train_pred, self.clusters)
 
             print(

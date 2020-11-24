@@ -9,6 +9,8 @@ import numpy as np
 import torch
 import random
 
+cwd = os.getcwd()
+
 # -------------------------------
 # randomness control
 # -------------------------------
@@ -29,6 +31,7 @@ if torch.cuda.is_available():
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
+#  device = torch.device("cpu")
 
 #  os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 #  os.environ["CUDA_VISIBLE_DEVICES"] = "2"
@@ -43,8 +46,8 @@ formatter = logging.Formatter('%(message)s')
 now = datetime.datetime.now()
 today = '%s-%s-%s' % (now.year, now.month, now.day)
 current_time = '%s-%s-%s' % (now.hour, now.minute, now.second)
-folder_path = '../../log/' + today
-
+log_path = os.path.join(cwd, '../../log/' + today)
+sub_log_path = os.path.join(log_path, current_time)
 # -------------------------------
 # implementation configuration
 # -------------------------------
@@ -101,7 +104,8 @@ cluster_type = 'dec'
 
 # temp dir for debugging
 #  temp_dec_cluster = "/home/junekyu/hdd/temp_dec/"
-temp_dec_cluster = "/home/junekyu/Study/nsr/etri_2019/data/temp_dec/"
+temp_dec_cluster = os.path.join(cwd, "../../data/temp_dec/")
+plot_path = os.path.join(sub_log_path, "clustering_plot")
 
 cluster_num = 10
 dec_batch_size = 128

@@ -49,9 +49,13 @@ def load_dataset(dataset_name, data_path):
         dataset = mnist_dataset.get_dataset()
 
     elif dataset_name == 'cifar10':
-        print('loading cifar10 dataset...')
+        print('loading cifari-10 dataset...')
         cifar10_dataset = CIFAR10_Dataset(root_dir=data_path)
         dataset = cifar10_dataset.get_dataset()
+
+    elif dataset_name == 'cifar100':
+        print('loading cifar-100 dataset')
+        #  cifar100_dataset =
 
     #  elif dataset_name == 'stl10':
 

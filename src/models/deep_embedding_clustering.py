@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import torch
 import torch.nn as nn
 
@@ -11,6 +13,7 @@ from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from sklearn.cluster import KMeans
 from itertools import combinations
 import numpy as np
+from models.utils import plot_distribution
 
 from tqdm import tqdm
 
@@ -77,7 +80,7 @@ class DEC_Module():
         #  self.encoder.apply(init_weights)
         #  self.decoder.apply(init_weights)
 
-    def acc_pretrain(self, encoder, decoder):
+    def acc_pretrain(self, encoder, decoder, epoch):
         encoder.eval()
         decoder.eval()
         test_x = []
@@ -93,14 +96,22 @@ class DEC_Module():
                     n_jobs=-1)
         y_pred = km.fit_predict(test_x)
         acc = cluster_accuracy(true_labels, y_pred)
+
+        plot_distribution(epoch=epoch,
+                          train=False,
+                          acc=acc,
+                          path=config.plot_path,
+                          data_x=test_x,
+                          true_y=true_labels,
+                          pred_y=y_pred)
         return acc
 
-    def acc_train(self, dec):
+    def acc_train(self, dec, epoch):
         dec.eval()
         test_x = []
         true_labels = []
         for i, d in enumerate(self.dataloader):
-            out = dec.encoder(d[0].cuda()).cpu().detach().numpy()
+            out = dec.module.encoder(d[0].cuda()).cpu().detach().numpy()
             test_x.extend(out)
             label = d[1].cpu().detach().numpy()
             true_labels.extend(label)
@@ -110,11 +121,22 @@ class DEC_Module():
                     n_jobs=-1)
         y_pred = km.fit_predict(test_x)
         acc = cluster_accuracy(true_labels, y_pred)
+
+        plot_distribution(epoch=epoch,
+                          train=False,
+                          acc=acc,
+                          path=config.plot_path,
+                          data_x=test_x,
+                          true_y=true_labels,
+                          pred_y=y_pred)
         return acc
 
     def pretrain(self, epochs):
         #  print("pretrain epochs : {}, lr : {}, momentum : {}".format(
         #      epochs, lr, momentum))
+
+        self.encoder = nn.DataParallel(self.encoder)
+        self.decoder = nn.DataParallel(self.decoder)
         self.encoder.to(config.device)
         self.decoder.to(config.device)
         #  gradient clipping
@@ -167,8 +189,7 @@ class DEC_Module():
                     epoch=epoch,
                     loss='%.6f' % loss_value,
                 )
-            #  if (epoch % 50 == 0):
-            acc = self.acc_pretrain(self.encoder, self.decoder)
+            acc = self.acc_pretrain(self.encoder, self.decoder, epoch)
             print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
 
             #  if (epoch % 50 == 0):
@@ -179,8 +200,9 @@ class DEC_Module():
     def train(self, epochs):
         #  print("train epochs : {}, lr : {}, momentum : {}".format(
         #      epochs, lr, momentum))
-        self.dec = DEC(self.encoder)
-        assert self.encoder == self.dec.encoder
+        self.dec = DEC(self.encoder.module)
+        self.dec = nn.DataParallel(self.dec)
+        assert self.encoder.module == self.dec.module.encoder
         optimizer = SGD(self.dec.parameters(), lr=0.01, momentum=0.9)
         #  optimizer = Adam(params=self.dec.parameters())
 
@@ -205,18 +227,18 @@ class DEC_Module():
                 batch, value = batch
                 actual.append(value)
             batch = batch.cuda(non_blocking=True)
-            features.append(self.dec.encoder(batch).detach().cpu())
+            features.append(self.dec.module.encoder(batch).detach().cpu())
         actual = torch.cat(actual).long()
         predicted = km.fit_predict(torch.cat(features).numpy())
         predicted_previous = torch.tensor(np.copy(predicted), dtype=torch.long)
 
-        accuracy = self.acc_train(self.dec)
+        accuracy = self.acc_train(self.dec, epoch=-1)
         cluster_centers = torch.tensor(km.cluster_centers_,
                                        dtype=torch.float,
                                        requires_grad=True)
         cluster_centers = cluster_centers.cuda(non_blocking=True)
         with torch.no_grad():
-            self.dec.state_dict()['assignment.cluster_centers'].copy_(
+            self.dec.module.state_dict()['assignment.cluster_centers'].copy_(
                 cluster_centers)
         loss_function = nn.KLDivLoss(size_average=False)
         delta_label = None
@@ -249,7 +271,7 @@ class DEC_Module():
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step(closure=None)
-                features.append(self.dec.encoder(batch).detach().cpu())
+                features.append(self.dec.module.encoder(batch).detach().cpu())
                 if index % 10 == 0:  # update_freq = 10
                     loss_value = float(loss.item())
                     data_iterator.set_postfix(
@@ -268,14 +290,14 @@ class DEC_Module():
                     % (delta_label, self.stopping_delta))
                 break
             predicted_previous = predicted
-            accuracy = self.acc_train(self.dec)
+            accuracy = self.acc_train(self.dec, epoch)
             print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
             log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
             #  if (epoch % 10 == 0):
             #      accuracy = self.acc_train(self.dec)
             #      print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
             #      log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
-        self.encoder = self.dec.encoder
+        self.encoder = self.dec.module.encoder
         print("training dec ended.")
 
     def predict(self):

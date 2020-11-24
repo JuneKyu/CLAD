@@ -32,7 +32,9 @@ def apply_odin(net, test_in, test_out):
     noise_magnitude = config.odin_perturbation_magnitude
 
     #  test_loader = DataLoader(test_data)
-    for j, data in enumerate(test_in):
+    test_in_loader = DataLoader(test_in, batch_size=1)
+    #  for j, data in enumerate(test_in):
+    for j, data in enumerate(test_in_loader):
 
         inputs = Variable(data.cuda(config.device), requires_grad=True)
         net.eval()
@@ -103,7 +105,10 @@ def apply_odin(net, test_in, test_out):
 
     print("out-of-distribution images")
 
-    for j, data in enumerate(test_out):
+    test_out_loader = DataLoader(test_out, batch_size=1)
+
+    #  for j, data in enumerate(test_out):
+    for j, data in enumerate(test_out_loader):
 
         inputs = Variable(data.cuda(config.device), requires_grad=True)
         outputs = net(inputs)

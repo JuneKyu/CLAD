@@ -80,11 +80,14 @@ def main():
 
     # logger
     log = config.logger
-    folder_path = config.folder_path
-    if os.path.exists(folder_path) == False:
-        os.makedirs(folder_path)
+    log_path = config.log_path
+    if os.path.exists(log_path) == False:
+        os.makedirs(log_path)
+    sub_log_path = config.sub_log_path
+    if os.path.exists(sub_log_path) == False:
+        os.makedirs(sub_log_path)
     fileHandler = logging.FileHandler(\
-            os.path.join(folder_path, config.current_time + '-' +\
+            os.path.join(sub_log_path, config.current_time + '-' +\
             dataset_name + '-' +\
             cluster_type + '-' +\
             classifier + '.txt'))

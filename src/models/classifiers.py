@@ -57,7 +57,8 @@ def Linear_classifier(train_data, train_cluster, n_epochs, lr):
         config.device)
     train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
 
-    model = LinearClassification(input_dim=input_size).cuda(config.device)
+    model = LinearClassification(input_dim=input_size)
+    model = nn.DataParallel(model).cuda(config.device)
     criterion = nn.CrossEntropyLoss()  # Log Softmax + ClassNLL Loss
     optimizer = Adam(model.parameters(), lr=lr)
 
@@ -88,7 +89,9 @@ def FC3_classifier(train_data, train_cluster, n_epochs, lr):
     train_data = torch.from_numpy(train_data.astype(np.float32)).cuda(
         config.device)
     train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    model = FC3Classification(input_dim=input_size).cuda(config.device)
+    model = FC3Classification(input_dim=input_size)
+    model = nn.DataParallel(model).cuda(config.device)
+    #  model =
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=lr)
 
@@ -133,6 +136,7 @@ def CNN_classifier(train_data,
                               height,
                               width,
                               is_rgb=is_rgb)
+    model = nn.DataParallel(model)
     model.to(config.device)
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=lr)
