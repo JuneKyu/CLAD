@@ -80,7 +80,7 @@ class DEC_Module():
         #  self.encoder.apply(init_weights)
         #  self.decoder.apply(init_weights)
 
-    def acc_pretrain(self, encoder, decoder, epoch):
+    def acc_pretrain(self, encoder, decoder, n_components, epoch):
         encoder.eval()
         decoder.eval()
         test_x = []
@@ -97,16 +97,18 @@ class DEC_Module():
         y_pred = km.fit_predict(test_x)
         acc = cluster_accuracy(true_labels, y_pred)
 
-        plot_distribution(epoch=epoch,
-                          train=False,
-                          acc=acc,
-                          path=config.plot_path,
-                          data_x=test_x,
-                          true_y=true_labels,
-                          pred_y=y_pred)
+        if (config.plot_clustering):
+            plot_distribution(epoch=epoch,
+                              train=False,
+                              acc=acc,
+                              path=config.plot_path,
+                              data_x=test_x,
+                              true_y=true_labels,
+                              pred_y=y_pred)
+        # TODO: change to clustering with_components
         return acc
 
-    def acc_train(self, dec, epoch):
+    def acc_train(self, dec, n_components, epoch):
         dec.eval()
         test_x = []
         true_labels = []
@@ -116,19 +118,27 @@ class DEC_Module():
             label = d[1].cpu().detach().numpy()
             true_labels.extend(label)
         true_labels = np.array(true_labels)
+
         km = KMeans(n_clusters=len(np.unique(true_labels)),
                     n_init=max(20, self.n_hidden_features),
                     n_jobs=-1)
         y_pred = km.fit_predict(test_x)
         acc = cluster_accuracy(true_labels, y_pred)
 
-        plot_distribution(epoch=epoch,
-                          train=False,
-                          acc=acc,
-                          path=config.plot_path,
-                          data_x=test_x,
-                          true_y=true_labels,
-                          pred_y=y_pred)
+        #  TODO: change to clustering with_components
+        #  km = KMeans(n_clusters=n_components,
+        #              n_init=max(20, self.n_hidden_features, n_jobs=-1))
+        #  y_pred = km.fit_predict(test_x)
+
+        if (config.plot_clustering):
+            plot_distribution(epoch=epoch,
+                              train=True,
+                              acc=acc,
+                              path=config.plot_path,
+                              data_x=test_x,
+                              true_y=true_labels,
+                              pred_y=y_pred)
+
         return acc
 
     def pretrain(self, epochs):
@@ -189,12 +199,14 @@ class DEC_Module():
                     epoch=epoch,
                     loss='%.6f' % loss_value,
                 )
-            acc = self.acc_pretrain(self.encoder, self.decoder, epoch)
-            print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
-
-            #  if (epoch % 50 == 0):
-            #      acc = self.acc_pretrain(self.encoder, self.decoder)
-            #      print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
+            #  acc = self.acc_pretrain(self.encoder, self.decoder,
+            #                          self.n_components, epoch)
+            #  print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
+            if ((epoch + 1) % 10 == 0):
+                acc = self.acc_pretrain(self.encoder, self.decoder,
+                                        self.n_components, epoch)
+                print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
+                log.info(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
         print("pretraining autoencoder ended.")
 
     def train(self, epochs):
@@ -232,7 +244,7 @@ class DEC_Module():
         predicted = km.fit_predict(torch.cat(features).numpy())
         predicted_previous = torch.tensor(np.copy(predicted), dtype=torch.long)
 
-        accuracy = self.acc_train(self.dec, epoch=-1)
+        accuracy = self.acc_train(self.dec, self.n_components, epoch=-1)
         cluster_centers = torch.tensor(km.cluster_centers_,
                                        dtype=torch.float,
                                        requires_grad=True)
@@ -290,22 +302,17 @@ class DEC_Module():
                     % (delta_label, self.stopping_delta))
                 break
             predicted_previous = predicted
-            accuracy = self.acc_train(self.dec, epoch)
-            print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
-            log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
-            #  if (epoch % 10 == 0):
-            #      accuracy = self.acc_train(self.dec)
-            #      print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
-            #      log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
+            #  accuracy = self.acc_train(self.dec, self.n_components, epoch)
+            #  print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
+            #  log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
+            if ((epoch + 1) % 10 == 0):
+                accuracy = self.acc_train(self.dec, self.n_components, epoch)
+                print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
+                log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
         self.encoder = self.dec.module.encoder
         print("training dec ended.")
 
     def predict(self):
-        #  data_iterator = tqdm(
-        #      self.dataloader,
-        #      leave=True,
-        #      unit='batch',
-        #  )
         features = []
         actual = []
         self.dec.eval()
@@ -332,6 +339,16 @@ class DEC(nn.Module):
 
     def forward(self, x):
         out = self.assignment(self.encoder(x))
+        return out
+
+    def predict(self, x):
+        with torch.no_grad():
+            out = self.assignment(self.encoder(x))
+        return out
+
+    def encode(self, x):
+        with torch.no_grad():
+            out = self.encoder(x)
         return out
 
 

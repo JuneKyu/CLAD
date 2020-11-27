@@ -1,6 +1,7 @@
 pip install pandas
 pip install scipy
 pip install sklearn
+pip install matplotlib
 pip install wget
 pip install torch torchvision
 pip install pytorch-nlp

@@ -193,6 +193,7 @@ class Model(object):
             train_pred = classifier.module.predict(
                 self.train_x.cuda(config.device))
             train_accuracy = accuracy_score(train_pred, self.clusters)
+            torch.cuda.empty_cache()
 
             print(
                 "NN Classifier training accuracy : {}".format(train_accuracy))

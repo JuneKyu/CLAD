@@ -99,6 +99,7 @@ gmm_type = 'tied'
 
 #
 """ deep embedding clustering """
+plot_clustering = False
 #
 cluster_type = 'dec'
 
@@ -206,7 +207,7 @@ fc3_classifier_lr = 0.00001
 #  is_rgb = False
 
 # for cifar10
-cnn_classifier_batch_size = 100
+cnn_classifier_batch_size = 128
 cnn_classifier_epochs = 100
 cnn_classifier_lr = 0.00001
 is_rgb = False

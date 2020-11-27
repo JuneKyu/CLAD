@@ -101,12 +101,12 @@ def apply_odin(net, test_in, test_out):
         if j > 1000:
             break
 
-        # out distribution test
+        torch.cuda.empty_cache()
 
+    # out distribution test
     print("out-of-distribution images")
 
     test_out_loader = DataLoader(test_out, batch_size=1)
-
     #  for j, data in enumerate(test_out):
     for j, data in enumerate(test_out_loader):
 
@@ -171,3 +171,5 @@ def apply_odin(net, test_in, test_out):
 
         if j > 1000:
             break
+
+        torch.cuda.empty_cache()

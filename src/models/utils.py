@@ -5,6 +5,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 import config
 
 
@@ -16,11 +17,15 @@ def plot_distribution(epoch,
                       true_y,
                       pred_y,
                       learning_rate=100,
-                      n_jobs=16):
+                      n_jobs=-1):
     print("plotting image on " + path + "...")
     if (os.path.exists(path) == False):
         os.makedirs(path)
-    tsne_model = TSNE(learning_rate=learning_rate, n_jobs=n_jobs)
+    tsne_model = TSNE(n_components=2,
+                      learning_rate=learning_rate,
+                      n_jobs=n_jobs)
+    #  pca_model = PCA(n_components=2)
+
     data_x = np.array(data_x)
     if (len(data_x.shape) > 2):
         data_temp = []
@@ -29,6 +34,7 @@ def plot_distribution(epoch,
         data_x = np.array(data_temp)
 
     transformed = tsne_model.fit_transform(data_x)
+    #  transformed = pca_model.fit_transform(data_x)
     xs = transformed[:, 0]
     ys = transformed[:, 1]
 
@@ -43,6 +49,8 @@ def draw_plot(xs, ys, train, epoch, label, acc, path):
         os.makedirs(path)
     plt.scatter(xs, ys, c=label)
     plt.title('acc: ' + str(acc), loc='center')
+    plt.grid()
+    plt.legend(np.unique(label))
     if (epoch == -1):
         epoch = "_init_"
     else:
@@ -51,4 +59,4 @@ def draw_plot(xs, ys, train, epoch, label, acc, path):
         plt.savefig(os.path.join(path, 'fig' + epoch + '_train.png'), dpi=300)
     else:
         plt.savefig(os.path.join(path, 'fig' + epoch + '_pretrain.png'),
-                    dpt=300)
+                    dpi=300)

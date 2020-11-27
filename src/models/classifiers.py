@@ -136,8 +136,8 @@ def CNN_classifier(train_data,
                               height,
                               width,
                               is_rgb=is_rgb)
+    model = model.cuda(config.device)
     model = nn.DataParallel(model)
-    model.to(config.device)
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=lr)
     #  optimizer = Adam(model.parameters())
@@ -165,6 +165,7 @@ def CNN_classifier(train_data,
         print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
                                                               n_epochs,
                                                               loss.item()))
+
     return model
 
 

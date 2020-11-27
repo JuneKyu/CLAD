@@ -1,0 +1,44 @@
+---------------------------------------------------------------------------------------------------
+----------Namespace(classifier='linear', cluster_num=10, cluster_type='dec', data_path='../../data', dataset_name='mnist', dec_pretrain_epochs=100, dec_train_epochs=100, n_hidden_features=5, normal_class_index_list=['0', '1', '2', '3', '4', '5', '6', '7', '8'], perterbation=0.001, plot_clustering=True, sentence_embedding='sentence_embedding', temperature=1000.0)----------
+---------------------------------------------------------------------------------------------------
+START 0:14:0
+
+0:14:0
+
+dataset name : mnist
+normal_class_index_list : [0, 1, 2, 3, 4, 5, 6, 7, 8]
+n_hidden_features : 5
+perterbation : 0.001
+dataset loading successful
+clustering...
+        |==> acc: 0.5869 <==|
+        |==> acc: 0.6588 <==|
+        |==> acc: 0.6830 <==|
+        |==> acc: 0.7137 <==|
+        |==> acc: 0.6521 <==|
+        |==> acc: 0.7603 <==|
+        |==> acc: 0.8010 <==|
+        |==> acc: 0.8297 <==|
+        |==> acc: 0.8404 <==|
+        |==> acc: 0.8494 <==|
+        |==> acc: 0.9297 <==|
+        |==> acc: 0.9335 <==|
+        |==> acc: 0.9350 <==|
+        |==> acc: 0.9337 <==|
+        |==> acc: 0.9373 <==|
+        |==> acc: 0.9339 <==|
+        |==> acc: 0.9345 <==|
+        |==> acc: 0.9288 <==|
+        |==> acc: 0.9314 <==|
+        |==> acc: 0.9269 <==|
+classifing...
+NN Classifier training accuracy = 0.645778986512738
+                   Base,     Odin
+auroc :           56.81   , 56.43
+detection error : 40.52 % , 38.87 %
+aupr in :         62.26   , 65.66
+aupr out :        52.23   , 48.75
+------------------------------
+------------------------------
+FINISH
+1:16:36
