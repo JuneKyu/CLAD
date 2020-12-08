@@ -56,26 +56,6 @@ class Model(object):
         clustering module of the model
         """
 
-        #  #  if self.cluster_type == 'dec' or 'cvae':  # deep embedding clustering
-        #  if (self.dataset_name == 'mnist'):
-        #      # use dec default configuration
-        #      print("")
-        #  elif (self.dataset_name == 'cifar10'):
-        #      config.dec_pretrain_epochs = config.cifar10_dec_pretrain_epochs
-        #      config.dec_finetune_epochs = config.cifar10_dec_finetune_epochs
-        #      config.dec_finetune_lr = config.cifar10_dec_finetune_lr
-        #      config.dec_finetune_momentum = config.cifar10_dec_finetune_momentum
-        #      config.dec_finetune_decay_step = config.cifar10_dec_finetune_decay_step
-        #      config.dec_finetune_decay_rate = config.cifar10_dec_finetune_decay_rate
-        #      config.dec_train_epochs = config.cifar10_dec_train_epochs
-        #      config.dec_train_lr = config.cifar10_dec_train_lr
-        #  elif (self.dataset_name == 'reuters'):
-        #      config.dec_finetune_epochs = config.reuters_dec_finetune_epochs
-        #      config.dec_finetune_lr = config.reuters_dec_finetune_lr
-        #      config.dec_finetune_decay_step = config.reuters_dec_finetune_decay_step
-        #      config.dec_finetune_decay_rate = config.reuters_dec_finetune_decay_rate
-        #      config.dec_train_epochs = config.reuters_dec_train_epochs
-
         #  run deep embedding clustering
         #  cluster_model = DEC_Module(
         #      train_x=self.train_x,
@@ -94,11 +74,12 @@ class Model(object):
         #  self.clusters, _ = cluster_model.predict()
         #  self.clusters = self.clusters.numpy()
 
-        if os.path.exists(config.temp_dec_cluster):
+        if (os.path.exists(config.temp_dec_cluster)):
             self.clusters = np.load(
                 os.path.join(config.temp_dec_cluster, "train_clusters.npy"))
         else:
             cluster_model = DEC_Module(
+                dataset_name=self.dataset_name,
                 train_x=self.train_x,
                 train_y=self.train_y,
                 batch_size=config.dec_batch_size,  # 128
@@ -113,7 +94,7 @@ class Model(object):
             #  cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
 
             # mnist - conv-dec
-            print("conv-dec")
+            #  print("conv-dec")
             cluster_model.pretrain(epochs=100)
             cluster_model.train(epochs=100)
             self.clusters, _ = cluster_model.predict()
@@ -124,9 +105,22 @@ class Model(object):
 
     def classify_nn(self, dataset_name):
         log = config.logger
-        if dataset_name in config.cps_datasets:
-            print("not implemented")
-        elif dataset_name in config.text_datasets:
+        classifier_name = config.classifier
+
+        assert classifier_name in implemented_classifier_models
+
+        if (dataset_name in config.cps_datasets):
+
+            if (classifier_name == 'linear'):
+                classifier = Linear_classifier(
+                    self.train_x,
+                    self.clusters,
+                    n_epochs=config.linear_classifier_epochs,
+                    lr=config.linear_classifier_lr)
+            pdb.set_trace()
+            print("todo")
+
+        elif (dataset_name in config.text_datasets):
             classifier = Linear_classifier(self.train_x,
                                            self.clusters,
                                            n_epochs=5000,
@@ -147,11 +141,7 @@ class Model(object):
             #  classifier = WideResNet_classifier()
             #  classifier = GRU_text_classifier(self.train_x, self.train_clusters,
             #  self.test_x, self.test_clusters)
-        elif dataset_name in config.image_datasets:
-
-            classifier_name = config.classifier
-
-            assert classifier_name in implemented_classifier_models
+        elif (dataset_name in config.image_datasets):
 
             if (classifier_name == 'knn'):
                 print("")

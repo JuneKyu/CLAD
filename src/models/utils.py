@@ -4,20 +4,24 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.manifold import TSNE
+#  from sklearn.manifold import TSNE
+from tsnecuda import TSNE
 from sklearn.decomposition import PCA
 import config
 
+import pdb
 
-def plot_distribution(epoch,
-                      train,
-                      acc,
-                      path,
-                      data_x,
-                      true_y,
-                      pred_y,
-                      learning_rate=100,
-                      n_jobs=-1):
+
+def plot_distribution(
+        epoch,
+        train,
+        #  acc,
+        path,
+        data_x,
+        true_y,
+        pred_y,
+        learning_rate=100,
+        n_jobs=-1):
     print("plotting image on " + path + "...")
     if (os.path.exists(path) == False):
         os.makedirs(path)
@@ -26,6 +30,7 @@ def plot_distribution(epoch,
                       n_jobs=n_jobs)
     #  pca_model = PCA(n_components=2)
 
+    pdb.set_trace()
     data_x = np.array(data_x)
     if (len(data_x.shape) > 2):
         data_temp = []
@@ -38,17 +43,15 @@ def plot_distribution(epoch,
     xs = transformed[:, 0]
     ys = transformed[:, 1]
 
-    draw_plot(xs, ys, train, epoch, true_y, acc,
-              os.path.join(path, "true_label"))
-    draw_plot(xs, ys, train, epoch, pred_y, acc,
-              os.path.join(path, "pred_label"))
+    draw_plot(xs, ys, train, epoch, true_y, os.path.join(path, "true_label"))
+    draw_plot(xs, ys, train, epoch, pred_y, os.path.join(path, "pred_label"))
 
 
-def draw_plot(xs, ys, train, epoch, label, acc, path):
+def draw_plot(xs, ys, train, epoch, label, path):
     if (os.path.exists(path) == False):
         os.makedirs(path)
     plt.scatter(xs, ys, c=label)
-    plt.title('acc: ' + str(acc), loc='center')
+    plt.title('embedding space', loc='center')
     plt.grid()
     plt.legend(np.unique(label))
     if (epoch == -1):

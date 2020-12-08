@@ -24,17 +24,23 @@ import config
 log = config.logger
 
 
-def set_data(train_x, train_y, batch_size=32):
+def set_image_data(train_x, train_y, batch_size=32):
 
     num_data = train_x.shape[0]
     channel_size = train_x.shape[1]
     height = train_x.shape[2]
     width = train_x.shape[3]
     data = TensorDataset(train_x, train_y)
-    #  data_sampler = RandomSampler(data)
-    #  dataloader = DataLoader(data, sampler=data_sampler, batch_size=batch_size)
     dataloader = DataLoader(data, batch_size=batch_size)
     return dataloader, height, width, channel_size, num_data
+
+
+def set_cps_data(train_x, train_y, batch_size=32):
+
+    num_data = train_x.shape[0]
+    data = TensorDataset(train_x, train_y)
+    dataloader = DataLoader(data, batch_size=batch_size)
+    return dataloader, num_data
 
 
 def init_weights(m):
@@ -50,6 +56,7 @@ class Flatten(nn.Module):
 
 class DEC_Module():
     def __init__(self,
+                 dataset_name,
                  train_x,
                  train_y,
                  batch_size,
@@ -57,21 +64,32 @@ class DEC_Module():
                  n_components=5,
                  n_hidden_features=10,
                  stopping_delta=0.001):
-        #  self.cuda = config.device
-        #  self.batch_size = batch_size
+
         self.cluster_type = cluster_type
         self.stopping_delta = stopping_delta
-        self.dataloader, self.height, self.width, self.channel_size, self.num_data = set_data(
-            train_x, train_y, batch_size=batch_size)
+        if (dataset_name in config.cps_datasets):
+            self.dataloader, self.num_data = set_cps_data(
+                train_x, train_y, batch_size=batch_size)
+            self.height = 1
+            self.width = 1
+            self.channel_size = 1
+        elif (dataset_name in config.text_datasets):
+            print("not implemented")
+        elif (dataset_name in config.image_datasets):
+            self.dataloader, self.height, self.width, self.channel_size, self.num_data = set_image_data(
+                train_x, train_y, batch_size=batch_size)
+
         self.n_components = n_components
         self.n_hidden_features = n_hidden_features
-        self.encoder = Encoder(cluster_type=cluster_type,
+        self.encoder = Encoder(dataset_name=dataset_name,
+                               cluster_type=cluster_type,
                                height=self.height,
                                width=self.width,
                                n_components=n_components,
                                n_hidden_features=n_hidden_features).to(
                                    config.device)
-        self.decoder = Decoder(cluster_type=cluster_type,
+        self.decoder = Decoder(dataset_name=dataset_name,
+                               cluster_type=cluster_type,
                                height=self.height,
                                width=self.width,
                                n_components=n_components,
@@ -80,7 +98,7 @@ class DEC_Module():
         #  self.encoder.apply(init_weights)
         #  self.decoder.apply(init_weights)
 
-    def acc_pretrain(self, encoder, decoder, n_components, epoch):
+    def plot_pretrain(self, encoder, decoder, n_components, epoch):
         encoder.eval()
         decoder.eval()
         test_x = []
@@ -88,62 +106,38 @@ class DEC_Module():
         for i, d in enumerate(self.dataloader):
             out = encoder(d[0].cuda()).cpu().detach().numpy()
             test_x.extend(out)
-            label = d[1].cpu().detach().numpy()
-            true_labels.extend(label)
-        true_labels = np.array(true_labels)
-        km = KMeans(n_clusters=len(np.unique(true_labels)),
-                    n_init=max(20, self.n_hidden_features),
+        km = KMeans(n_clusters=n_components,
+                    n_init=max(20, n_components),
                     n_jobs=-1)
         y_pred = km.fit_predict(test_x)
-        acc = cluster_accuracy(true_labels, y_pred)
-
         if (config.plot_clustering):
             plot_distribution(epoch=epoch,
                               train=False,
-                              acc=acc,
                               path=config.plot_path,
                               data_x=test_x,
                               true_y=true_labels,
                               pred_y=y_pred)
-        # TODO: change to clustering with_components
-        return acc
 
-    def acc_train(self, dec, n_components, epoch):
+    def plot_train(self, dec, n_components, epoch):
         dec.eval()
         test_x = []
         true_labels = []
         for i, d in enumerate(self.dataloader):
             out = dec.module.encoder(d[0].cuda()).cpu().detach().numpy()
             test_x.extend(out)
-            label = d[1].cpu().detach().numpy()
-            true_labels.extend(label)
-        true_labels = np.array(true_labels)
-
-        km = KMeans(n_clusters=len(np.unique(true_labels)),
-                    n_init=max(20, self.n_hidden_features),
+        km = KMeans(n_clusters=n_components,
+                    n_init=max(20, n_components),
                     n_jobs=-1)
         y_pred = km.fit_predict(test_x)
-        acc = cluster_accuracy(true_labels, y_pred)
-
-        #  TODO: change to clustering with_components
-        #  km = KMeans(n_clusters=n_components,
-        #              n_init=max(20, self.n_hidden_features, n_jobs=-1))
-        #  y_pred = km.fit_predict(test_x)
-
         if (config.plot_clustering):
             plot_distribution(epoch=epoch,
                               train=True,
-                              acc=acc,
                               path=config.plot_path,
                               data_x=test_x,
                               true_y=true_labels,
                               pred_y=y_pred)
 
-        return acc
-
     def pretrain(self, epochs):
-        #  print("pretrain epochs : {}, lr : {}, momentum : {}".format(
-        #      epochs, lr, momentum))
 
         self.encoder = nn.DataParallel(self.encoder)
         self.decoder = nn.DataParallel(self.decoder)
@@ -157,12 +151,21 @@ class DEC_Module():
         loss_function = nn.MSELoss()
 
         if (self.cluster_type == 'dec'):
+            #  optimizer_enc = SGD(params=self.encoder.parameters(),
+            #                      lr=0.01,
+            #                      momentum=0.9)
+            #  optimizer_dec = SGD(params=self.decoder.parameters(),
+            #                      lr=0.01,
+            #                      momentum=0.9)
+
+            # testing for swat
             optimizer_enc = SGD(params=self.encoder.parameters(),
-                                lr=0.01,
+                                lr=config.dec_pretrain_lr,
                                 momentum=0.9)
             optimizer_dec = SGD(params=self.decoder.parameters(),
-                                lr=0.01,
+                                lr=config.dec_pretrain_lr,
                                 momentum=0.9)
+
         else:
             optimizer_enc = Adam(params=self.encoder.parameters())
             optimizer_dec = Adam(params=self.decoder.parameters())
@@ -187,7 +190,6 @@ class DEC_Module():
 
                 output = self.encoder(batch)
                 output = self.decoder(output)
-                #  loss = loss_function(output, batch)
                 loss = loss_function(output, batch)
                 loss_value = float(loss.item())
                 optimizer_enc.zero_grad()
@@ -199,14 +201,8 @@ class DEC_Module():
                     epoch=epoch,
                     loss='%.6f' % loss_value,
                 )
-            #  acc = self.acc_pretrain(self.encoder, self.decoder,
-            #                          self.n_components, epoch)
-            #  print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
-            if ((epoch + 1) % 10 == 0):
-                acc = self.acc_pretrain(self.encoder, self.decoder,
-                                        self.n_components, epoch)
-                print(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
-                log.info(' ' * 8 + '|==> acc: %.4f <==|' % (acc))
+        self.plot_pretrain(self.encoder, self.decoder, self.n_components,
+                           epoch)
         print("pretraining autoencoder ended.")
 
     def train(self, epochs):
@@ -215,7 +211,9 @@ class DEC_Module():
         self.dec = DEC(self.encoder.module)
         self.dec = nn.DataParallel(self.dec)
         assert self.encoder.module == self.dec.module.encoder
-        optimizer = SGD(self.dec.parameters(), lr=0.01, momentum=0.9)
+        optimizer = SGD(self.dec.parameters(),
+                        lr=config.dec_train_lr,
+                        momentum=0.9)
         #  optimizer = Adam(params=self.dec.parameters())
 
         data_iterator = tqdm(self.dataloader,
@@ -244,7 +242,6 @@ class DEC_Module():
         predicted = km.fit_predict(torch.cat(features).numpy())
         predicted_previous = torch.tensor(np.copy(predicted), dtype=torch.long)
 
-        accuracy = self.acc_train(self.dec, self.n_components, epoch=-1)
         cluster_centers = torch.tensor(km.cluster_centers_,
                                        dtype=torch.float,
                                        requires_grad=True)
@@ -256,16 +253,14 @@ class DEC_Module():
         delta_label = None
         for epoch in range(epochs):
             features = []
-            data_iterator = tqdm(
-                self.dataloader,
-                leave='True',
-                unit='batch',
-                postfix={
-                    'epoch': epoch,
-                    #  'acc': '%.4f' % (accuracy or 0.0),
-                    'loss': '%.8f' % 0.0,
-                    'dlb': '%.4f' % (delta_label or 0.0)
-                })
+            data_iterator = tqdm(self.dataloader,
+                                 leave='True',
+                                 unit='batch',
+                                 postfix={
+                                     'epoch': epoch,
+                                     'loss': '%.8f' % 0.0,
+                                     'dlb': '%.4f' % (delta_label or 0.0)
+                                 })
             self.dec.train()
             for index, batch in enumerate(data_iterator):
                 if ((isinstance(batch, tuple) or isinstance(batch, list))
@@ -275,11 +270,9 @@ class DEC_Module():
                 output = self.dec(batch)
                 target = target_distribution(output).detach()
                 loss = loss_function(output.log(), target) / output.shape[0]
-                data_iterator.set_postfix(
-                    epoch=epoch,
-                    #  acc='%.4f' % (accuracy or 0.0),
-                    loss='%.8f' % float(loss.item()),
-                    dlb='%.4f' % (delta_label or 0.0))
+                data_iterator.set_postfix(epoch=epoch,
+                                          loss='%.8f' % float(loss.item()),
+                                          dlb='%.4f' % (delta_label or 0.0))
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step(closure=None)
@@ -288,7 +281,6 @@ class DEC_Module():
                     loss_value = float(loss.item())
                     data_iterator.set_postfix(
                         epoch=epoch,
-                        #  acc='%.4f' % (accuracy or 0.0),
                         loss='%.8f' % loss_value,
                         dlb='%.4f' % (delta_label or 0.0),
                     )
@@ -302,13 +294,7 @@ class DEC_Module():
                     % (delta_label, self.stopping_delta))
                 break
             predicted_previous = predicted
-            #  accuracy = self.acc_train(self.dec, self.n_components, epoch)
-            #  print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
-            #  log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
-            if ((epoch + 1) % 10 == 0):
-                accuracy = self.acc_train(self.dec, self.n_components, epoch)
-                print(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
-                log.info(' ' * 8 + '|==> acc: %.4f <==|' % (accuracy))
+        self.plot_train(self.dec, self.n_components, epoch)
         self.encoder = self.dec.module.encoder
         print("training dec ended.")
 
@@ -371,6 +357,8 @@ class ClusterAssignment(nn.Module):
             initial_cluster_centers = cluster_centers
         self.cluster_centers = nn.Parameter(initial_cluster_centers)
 
+    #  compute the soft assignment for a batch of feature vectors, returning a batch of assignments
+    #  for each cluster.
     def forward(self, batch: torch.Tensor) -> torch.Tensor:
         norm_squared = torch.sum(
             (batch.unsqueeze(1) - self.cluster_centers)**2, 2)
@@ -381,9 +369,10 @@ class ClusterAssignment(nn.Module):
 
 
 class Encoder(nn.Module):
-    def __init__(self, cluster_type, height, width, n_components,
+    def __init__(self, dataset_name, cluster_type, height, width, n_components,
                  n_hidden_features):
         super(Encoder, self).__init__()
+        self.dataset_name = dataset_name
         self.height = height
         self.width = width
         self.cluster_type = cluster_type
@@ -542,9 +531,10 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, cluster_type, height, width, n_components,
+    def __init__(self, dataset_name, cluster_type, height, width, n_components,
                  n_hidden_features):
         super(Decoder, self).__init__()
+        self.dataset_name = dataset_name
         self.height = height
         self.width = width
         self.cluster_type = cluster_type
@@ -703,7 +693,15 @@ class Decoder(nn.Module):
             out = out.reshape(out.size(0), self.channels * 256,
                               (self.height // (2**3)), (self.width // (2**3)))
             out = self.decoder_net(out)
-        out = out.reshape(-1, self.channels, self.height, self.width)
+        if (self.dataset_name in config.cps_datasets):
+            # 10 is the size of unit of freq_data from swat
+            # ->1280*10
+            pdb.set_trace()
+            out = out.reshape(-1, 10)
+        elif (self.dataset_name in config.text_datasets):
+            print("not implemented")
+        elif (self.dataset_name in config.image_datasets):
+            out = out.reshape(-1, self.channels, self.height, self.width)
         return out
 
     def predict(self, x):
