@@ -72,9 +72,8 @@ def Linear_classifier(train_data, train_cluster, n_epochs, lr):
         # TODO: loss can be ploted
         #  train_losses[iter_] = loss.item()
         if (iter_ + 1) % 10 == 0:
-            print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-                                                                  n_epochs,
-                                                                  loss.item()))
+            print("Epoch {}/{}, Training loss: {}".format(
+                (iter_ + 1), n_epochs, loss.item()))
     return model
 
 
@@ -106,9 +105,8 @@ def FC3_classifier(train_data, train_cluster, n_epochs, lr):
         optimizer.step()
 
         if (iter_ + 1) % 10 == 0:
-            print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-                                                                  n_epochs,
-                                                                  loss.item()))
+            print("Epoch {}/{}, Training loss: {}".format(
+                (iter_ + 1), n_epochs, loss.item()))
     return model
 
 
@@ -162,9 +160,8 @@ def CNN_classifier(train_data,
         #      print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
         #                                                            n_epochs,
         #                                                            loss.item()))
-        print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-                                                              n_epochs,
-                                                              loss.item()))
+        print("Epoch {}/{}, Training loss: {}".format((iter_ + 1), n_epochs,
+                                                      loss.item()))
 
     return model
 
@@ -216,9 +213,8 @@ def CNN_large_classifier(train_data,
         #      print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
         #                                                            n_epochs,
         #                                                            loss.item()))
-        print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-                                                              n_epochs,
-                                                              loss.item()))
+        print("Epoch {}/{}, Training loss: {}".format((iter_ + 1), n_epochs,
+                                                      loss.item()))
     return model
 
 

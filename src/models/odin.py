@@ -28,8 +28,8 @@ def apply_odin(net, test_in, test_out):
     g1 = open(config.odin_in_path, "w")
     g2 = open(config.odin_out_path, "w")
 
-    temper = config.odin_temperature
-    noise_magnitude = config.odin_perturbation_magnitude
+    temper = config.temperature
+    noise_magnitude = config.perturbation
 
     #  test_loader = DataLoader(test_data)
     test_in_loader = DataLoader(test_in, batch_size=1)

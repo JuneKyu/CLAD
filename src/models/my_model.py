@@ -110,15 +110,34 @@ class Model(object):
         assert classifier_name in implemented_classifier_models
 
         if (dataset_name in config.cps_datasets):
-
+            print("classifier")
+            print("epoch: {}".format(config.classifier_epochs))
+            print("lr: {}".format(config.classifier_lr))
             if (classifier_name == 'linear'):
                 classifier = Linear_classifier(
                     self.train_x,
                     self.clusters,
-                    n_epochs=config.linear_classifier_epochs,
-                    lr=config.linear_classifier_lr)
-            pdb.set_trace()
-            print("todo")
+                    n_epochs=config.classifier_epochs,
+                    lr=config.classifier_lr)
+            elif (classifier_name == 'fc3'):
+                classifier = FC3_classifier(
+                    self.train_x,
+                    self.clusters,
+                    n_epochs=config.fc3_classifier_epochs,
+                    lr=config.fc3_classifier_lr)
+
+            #  if (classifier_name == 'linear'):
+            #      classifier = Linear_classifier(
+            #          self.train_x,
+            #          self.clusters,
+            #          n_epochs=config.linear_classifier_epochs,
+            #          lr=config.linear_classifier_lr)
+            #  elif (classifier_name == 'fc3'):
+            #      classifier = FC3_classifier(
+            #          self.train_x,
+            #          self.clusters,
+            #          n_epochs=config.fc3_classifier_epochs,
+            #          lr=config.fc3_classifier_lr)
 
         elif (dataset_name in config.text_datasets):
             classifier = Linear_classifier(self.train_x,
@@ -180,14 +199,14 @@ class Model(object):
                     batch_size=batch_size,
                     is_rgb=is_rgb)
 
-            train_pred = classifier.module.predict(
-                self.train_x.cuda(config.device))
-            train_accuracy = accuracy_score(train_pred, self.clusters)
-            torch.cuda.empty_cache()
+        print("Calculating NN Classifier training accuracy...")
+        train_pred = classifier.module.predict(self.train_x.cuda(
+            config.device))
+        train_accuracy = accuracy_score(train_pred, self.clusters)
+        torch.cuda.empty_cache()
 
-            print(
-                "NN Classifier training accuracy : {}".format(train_accuracy))
-            log.info(
-                "NN Classifier training accuracy = {}".format(train_accuracy))
-            apply_odin(classifier, self.test_in, self.test_out)
-            calculate_metric("mnist")
+        print("NN Classifier training accuracy : {}".format(train_accuracy))
+        log.info("NN Classifier training accuracy = {}".format(train_accuracy))
+        apply_odin(classifier, self.test_in, self.test_out)
+        print("Calculating Metrics")
+        calculate_metric("mnist")

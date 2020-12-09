@@ -109,7 +109,8 @@ temp_dec_cluster = os.path.join(cwd, "../../data/temp_dec/")
 plot_path = os.path.join(sub_log_path, "clustering_plot")
 
 cluster_num = 10
-dec_batch_size = 128
+#  dec_batch_size = 128
+dec_batch_size = 512
 n_hidden_features = 10
 
 # pretrain
@@ -123,8 +124,9 @@ dec_pretrain_momentum = 0.9
 
 # dec training stage
 dec_pretrain_epochs = 100
+dec_pretrain_lr = 0.01
 dec_train_epochs = 100
-#  dec_train_lr = 0.01
+dec_train_lr = 0.01
 #  dec_train_momentum = 0.9
 
 # reuters
@@ -184,28 +186,31 @@ text_classifier_epoch = 10
 
 text_classifier_batch_size = 1024
 
-# for mnist
-linear_classifier_epochs = 200
+classifier_epochs = 200
+classifier_lr = 0
+""" linear """
+# for swat
+linear_classifier_epochs = 5000
 linear_classifier_lr = 0.0001
-
+# for mnist
+#  linear_classifier_epochs = 200
+#  linear_classifier_lr = 0.0001
 # for cifar10
 #  linear_classifier_epochs = 5000
 #  linear_classifier_lr = 0.001
-
+""" fc3 """
 # mnist
-fc3_classifier_epochs = 100
-fc3_classifier_lr = 0.00001
-
-# for cifar10
-#  fc3_classifier_epochs = 1000
-#  fc3_classifier_lr = 0.001
-
+#  fc3_classifier_epochs = 100
+#  fc3_classifier_lr = 0.00001
+#  for cifar10
+fc3_classifier_epochs = 1000
+fc3_classifier_lr = 0.001
+""" cnn """
 # for mnist
 #  cnn_classifier_batch_size = 100
 #  cnn_classifier_epochs = 100
 #  cnn_classifier_lr = 0.00001
 #  is_rgb = False
-
 # for cifar10
 cnn_classifier_batch_size = 128
 cnn_classifier_epochs = 100
@@ -216,6 +221,7 @@ is_rgb = False
 #  cnn_large_classifier_epochs = 100
 #  cnn_large_classifier_lr = 0.0001
 #
+
 # -------------------------------
 # ood detector configuration
 # -------------------------------
@@ -230,6 +236,6 @@ odin_out_path = os.path.join(sf_scores_path, 'confidence_Odin_Out.txt')
 # original temper and perterbation magintude
 #  odin_temperature = 1000
 #  odin_perturbation_magnitude = 0.0012  # perturbation
-odin_temperature = 1000
-odin_perturbation_magnitude = 0.1
+temperature = 1000
+perturbation = 0.1
 # odin with temper 10, perturbation 0.12 : odin 0.9980 , base 0.4313

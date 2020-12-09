@@ -18,11 +18,8 @@ def load_dataset(dataset_name, data_path):
     dataset = None
 
     if dataset_name == 'swat':
-        # TODO: debug
         print("loading swat dataset...")
         swat_dataset = SWaT_Dataset(root_dir=data_path)
-        #  print("preprocessing...")
-        #  swat_dataset.preprocess()
         dataset = swat_dataset.get_dataset()
 
     elif dataset_name == 'wadi':

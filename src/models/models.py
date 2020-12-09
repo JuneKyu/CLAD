@@ -39,7 +39,7 @@ class LinearClassification(nn.Module):
         dataloader = DataLoader(x, batch_size=128)
         predicted = []
         with torch.no_grad():
-            for _, data in enumerate(x):
+            for _, data in enumerate(dataloader):
                 out_features = self.linear(data)
                 predict_sm = F.softmax(out_features)
                 predict_sm = predict_sm.detach().cpu().numpy()
@@ -193,7 +193,6 @@ class CNNLargeClassification(nn.Module):
                 out = self.fc_layer(out)
                 predict_sm = F.softmax(out)
                 predict_sm = predict_sm.detach().cpu().numpy()
-                for i in range(len(predict_sm)):
-                    predicted.append(
-                        np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+                #  for i in range(len(predict_sm)):
+                predicted.append(np.where(predict_sm == max(predict_sm))[0][0])
         return predicted

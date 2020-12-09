@@ -36,6 +36,7 @@ class MNIST_Dataset(object):
         self.train_y = torch.tensor(self.train_y)
         self.test_in_x = torch.tensor(self.test_in_x)
         self.test_out_x = torch.tensor(self.test_out_x)
+
         dataset = {
             "train_x": self.train_x,
             "train_y": self.train_y,

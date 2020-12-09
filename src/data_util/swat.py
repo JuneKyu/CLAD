@@ -20,25 +20,46 @@ class SWaT_Dataset(object):
     def __init__(self, root_dir: str):
 
         self._root_dir = root_dir
-        self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y = swat_dataset(
+        #  self.train_x, self.train_y, self.val_x, self.val_y, self.test_x, self.test_y = swat_dataset(
+        #      root_dir)
+        self.train_x, self.train_y, self.test_x, self.test_y = swat_dataset(
             root_dir)
+        self.test_in_x, self.test_out_x = get_in_out(self.test_x, self.test_y)
 
     def get_dataset(self):
 
         self.train_x = torch.tensor(self.train_x).float()
-        self.train_y = torch.tensor(self.train_y).float()
-        self.val_x = torch.tensor(self.val_x).float()
-        self.val_y = torch.tensor(self.val_y).float()
-        self.test_x = torch.tensor(self.test_x).float()
-        self.test_y = torch.tensor(self.test_y).float()
+        self.train_y = torch.tensor(self.train_y).int()
+        #  self.val_x = torch.tensor(self.val_x).float()
+        #  self.val_y = torch.tensor(self.val_y).float()
+        #  self.test_x = torch.tensor(self.test_x).float()
+        #  self.test_y = torch.tensor(self.test_y).int()
 
-        train = TensorDataset(self.train_x, self.train_y)
-        val = TensorDataset(self.val_x, self.val_y)
-        test = TensorDataset(self.test_x, self.test_y)
+        #  train = TensorDataset(self.train_x, self.train_y)
+        #  val = TensorDataset(self.val_x, self.val_y)
+        #  test = TensorDataset(self.test_x, self.test_y)
 
-        dataset = {"train": train, "val": val, "test": test}
+        #  dataset = {"train": train, "val": val, "test": test}
+        #  dataset = {"train": train, "test": test}
+        dataset = {
+            "train_x": self.train_x,
+            "train_y": self.train_y,
+            "test_in": self.test_in_x,
+            "test_out": self.test_out_x
+        }
 
         return dataset
+
+
+def get_in_out(data, label):
+    in_data = []
+    out_data = []
+    for i, d in enumerate(data):
+        if (label[i] == 0):
+            in_data.append(d)
+        else:
+            out_data.append(d)
+    return in_data, out_data
 
 
 def swat_dataset(directory='../data'):
@@ -90,10 +111,11 @@ def swat_dataset(directory='../data'):
     test_concat_x = np.concatenate(
         (test_x_modify_swat, test_x_modify_swat_freq), 1)
 
-    val_x = test_concat_x.copy()
-    val_y = test_y.copy()
+    #  val_x = test_concat_x.copy()
+    #  val_y = test_y.copy()
 
-    return train_concat_x, train_y, val_x, val_y, test_concat_x, test_y
+    #  return train_concat_x, train_y, val_x, val_y, test_concat_x, test_y
+    return train_concat_x, train_y, test_concat_x, test_y
 
 
 def get_freq_data(data, read_size, window_size, freq_select_list):
@@ -101,7 +123,7 @@ def get_freq_data(data, read_size, window_size, freq_select_list):
     data = data[freq_select_list]
     f, t, Sxx = signal.spectrogram(data.values[:, 0], 1)
 
-    tp = np.zeros((data.shape[0], read_size), dtype=float)
+    tp = np.zeros((data.shape[0], read_size), dtype=np.float32)
 
     tp[0:int(t[0]), :] = Sxx[0:read_size, 0]
 
@@ -113,7 +135,7 @@ def get_freq_data(data, read_size, window_size, freq_select_list):
         f, t, Sxx = signal.spectrogram(data.values[:, feature],
                                        1,
                                        window=signal.tukey(window_size))
-        tp = np.zeros((data.shape[0], read_size), dtype=float)
+        tp = np.zeros((data.shape[0], read_size), dtype=np.float32)
         tp[0:int(t[0]), :] = Sxx[0:read_size, 0]
 
         for i in range(0, Sxx.shape[1] - 1):
@@ -139,9 +161,10 @@ def PCA_preprocessing_modify(scaler, train_x, test_x, selected_dim):
     test_x = transformer.transform(test_x)
 
     pca = PCA(n_components=np.shape(train_x)[1])
+
     pca.fit(train_x)
 
-    train_x = pca.transform(train_x)[:, selected_dim]
-    test_x = pca.transform(test_x)[:, selected_dim]
+    train_x = pca.transform(train_x)[:, selected_dim].astype(np.float32)
+    test_x = pca.transform(test_x)[:, selected_dim].astype(np.float32)
 
     return train_x, test_x

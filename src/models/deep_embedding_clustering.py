@@ -70,9 +70,9 @@ class DEC_Module():
         if (dataset_name in config.cps_datasets):
             self.dataloader, self.num_data = set_cps_data(
                 train_x, train_y, batch_size=batch_size)
-            self.height = 1
+            self.height = 10
             self.width = 1
-            self.channel_size = 1
+            self.channel_size = 1  # window size = 10 -> height * width * channel = 10
         elif (dataset_name in config.text_datasets):
             print("not implemented")
         elif (dataset_name in config.image_datasets):
@@ -111,12 +111,13 @@ class DEC_Module():
                     n_jobs=-1)
         y_pred = km.fit_predict(test_x)
         if (config.plot_clustering):
-            plot_distribution(epoch=epoch,
-                              train=False,
-                              path=config.plot_path,
-                              data_x=test_x,
-                              true_y=true_labels,
-                              pred_y=y_pred)
+            plot_distribution(
+                epoch=epoch,
+                train=False,
+                path=config.plot_path,
+                data_x=test_x,
+                #  true_y=true_labels,
+                pred_y=y_pred)
 
     def plot_train(self, dec, n_components, epoch):
         dec.eval()
@@ -130,12 +131,13 @@ class DEC_Module():
                     n_jobs=-1)
         y_pred = km.fit_predict(test_x)
         if (config.plot_clustering):
-            plot_distribution(epoch=epoch,
-                              train=True,
-                              path=config.plot_path,
-                              data_x=test_x,
-                              true_y=true_labels,
-                              pred_y=y_pred)
+            plot_distribution(
+                epoch=epoch,
+                train=True,
+                path=config.plot_path,
+                data_x=test_x,
+                #  true_y=true_labels,
+                pred_y=y_pred)
 
     def pretrain(self, epochs):
 
@@ -201,8 +203,9 @@ class DEC_Module():
                     epoch=epoch,
                     loss='%.6f' % loss_value,
                 )
-        self.plot_pretrain(self.encoder, self.decoder, self.n_components,
-                           epoch)
+        if (config.plot_clustering):
+            self.plot_pretrain(self.encoder, self.decoder, self.n_components,
+                               epoch)
         print("pretraining autoencoder ended.")
 
     def train(self, epochs):
@@ -294,7 +297,9 @@ class DEC_Module():
                     % (delta_label, self.stopping_delta))
                 break
             predicted_previous = predicted
-        self.plot_train(self.dec, self.n_components, epoch)
+
+        if (config.plot_clustering):
+            self.plot_train(self.dec, self.n_components, epoch)
         self.encoder = self.dec.module.encoder
         print("training dec ended.")
 
@@ -695,8 +700,7 @@ class Decoder(nn.Module):
             out = self.decoder_net(out)
         if (self.dataset_name in config.cps_datasets):
             # 10 is the size of unit of freq_data from swat
-            # ->1280*10
-            pdb.set_trace()
+            # 1280 -> 128*10
             out = out.reshape(-1, 10)
         elif (self.dataset_name in config.text_datasets):
             print("not implemented")

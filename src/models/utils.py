@@ -5,7 +5,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 #  from sklearn.manifold import TSNE
-from tsnecuda import TSNE
+from MulticoreTSNE import MulticoreTSNE as TSNE
 from sklearn.decomposition import PCA
 import config
 
@@ -18,7 +18,7 @@ def plot_distribution(
         #  acc,
         path,
         data_x,
-        true_y,
+        #  true_y,
         pred_y,
         learning_rate=100,
         n_jobs=-1):
@@ -30,7 +30,6 @@ def plot_distribution(
                       n_jobs=n_jobs)
     #  pca_model = PCA(n_components=2)
 
-    pdb.set_trace()
     data_x = np.array(data_x)
     if (len(data_x.shape) > 2):
         data_temp = []
@@ -43,8 +42,8 @@ def plot_distribution(
     xs = transformed[:, 0]
     ys = transformed[:, 1]
 
-    draw_plot(xs, ys, train, epoch, true_y, os.path.join(path, "true_label"))
-    draw_plot(xs, ys, train, epoch, pred_y, os.path.join(path, "pred_label"))
+    #  draw_plot(xs, ys, train, epoch, true_y, os.path.join(path, "true_label"))
+    draw_plot(xs, ys, train, epoch, pred_y, path)
 
 
 def draw_plot(xs, ys, train, epoch, label, path):
