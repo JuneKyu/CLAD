@@ -19,6 +19,11 @@ def apply_odin(net, test_in, test_out):
 
     print("in-distribution images")
 
+    test_in_loader = DataLoader(test_in, batch_size=1)
+    test_out_loader = DataLoader(test_out, batch_size=1)
+
+    test_num = max(10000, max(len(test_in), len(test_out)))
+
     criterion = nn.CrossEntropyLoss()
     t0 = time.time()
     if os.path.exists(config.sf_scores_path) == False:
@@ -31,8 +36,6 @@ def apply_odin(net, test_in, test_out):
     temper = config.temperature
     noise_magnitude = config.perturbation
 
-    #  test_loader = DataLoader(test_data)
-    test_in_loader = DataLoader(test_in, batch_size=1)
     #  for j, data in enumerate(test_in):
     for j, data in enumerate(test_in_loader):
 
@@ -106,7 +109,6 @@ def apply_odin(net, test_in, test_out):
     # out distribution test
     print("out-of-distribution images")
 
-    test_out_loader = DataLoader(test_out, batch_size=1)
     #  for j, data in enumerate(test_out):
     for j, data in enumerate(test_out_loader):
 

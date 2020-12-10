@@ -114,17 +114,18 @@ class Model(object):
             print("epoch: {}".format(config.classifier_epochs))
             print("lr: {}".format(config.classifier_lr))
             if (classifier_name == 'linear'):
+                print('linear')
                 classifier = Linear_classifier(
                     self.train_x,
                     self.clusters,
                     n_epochs=config.classifier_epochs,
                     lr=config.classifier_lr)
             elif (classifier_name == 'fc3'):
-                classifier = FC3_classifier(
-                    self.train_x,
-                    self.clusters,
-                    n_epochs=config.fc3_classifier_epochs,
-                    lr=config.fc3_classifier_lr)
+                print('fc3')
+                classifier = FC3_classifier(self.train_x,
+                                            self.clusters,
+                                            n_epochs=config.classifier_epochs,
+                                            lr=config.classifier_lr)
 
             #  if (classifier_name == 'linear'):
             #      classifier = Linear_classifier(

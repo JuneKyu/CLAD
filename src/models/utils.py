@@ -49,10 +49,12 @@ def plot_distribution(
 def draw_plot(xs, ys, train, epoch, label, path):
     if (os.path.exists(path) == False):
         os.makedirs(path)
-    plt.scatter(xs, ys, c=label)
+    scatter_plot = plt.scatter(xs, ys, s=4, c=label)
+    handles, _ = scatter_plot.legend_elements(prop='colors')
     plt.title('embedding space', loc='center')
     plt.grid()
-    plt.legend(np.unique(label))
+    plt.legend(handles, np.unique(label), loc='best')
+
     if (epoch == -1):
         epoch = "_init_"
     else:

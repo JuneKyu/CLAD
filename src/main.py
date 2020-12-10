@@ -118,6 +118,8 @@ def main():
 
     print("dataset name : " + dataset_name)
     log.info("dataset name : " + dataset_name)
+    print("classifier : " + classifier)
+    log.info("classifier : " + classifier)
 
     # data specific parameter configurations
     #  if (dataset_name in ("swat")) and (cluster_type in ("dec")):
