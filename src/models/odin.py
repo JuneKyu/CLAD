@@ -17,12 +17,13 @@ import pdb
 
 def apply_odin(net, test_in, test_out):
 
-    print("in-distribution images")
+    print("in-distribution data")
 
     test_in_loader = DataLoader(test_in, batch_size=1)
     test_out_loader = DataLoader(test_out, batch_size=1)
 
-    test_num = max(10000, max(len(test_in), len(test_out)))
+    #  test_num = min(10000, min(len(test_in), len(test_out)))
+    test_num = min(1000, min(len(test_in), len(test_out)))
 
     criterion = nn.CrossEntropyLoss()
     t0 = time.time()
@@ -95,19 +96,17 @@ def apply_odin(net, test_in, test_out):
 
         if j % 100 == 99:
             print("{:4}/{:4} data processed, {:.1f} seconds used.".format(
-                #  j + 1, len(test_in),
-                j + 1,
-                1000,
+                j + 1, test_num,
                 time.time() - t0))
             t0 = time.time()
 
-        if j > 1000:
+        if j > test_num:
             break
 
         torch.cuda.empty_cache()
 
     # out distribution test
-    print("out-of-distribution images")
+    print("out-of-distribution data")
 
     #  for j, data in enumerate(test_out):
     for j, data in enumerate(test_out_loader):
@@ -165,13 +164,11 @@ def apply_odin(net, test_in, test_out):
 
         if j % 100 == 99:
             print("{:4}/{:4} data processed, {:.1f} seconds used.".format(
-                #  j + 1, len(test_out),
-                j + 1,
-                1000,
+                j + 1, test_num,
                 time.time() - t0))
             t0 = time.time()
 
-        if j > 1000:
+        if j > test_num:
             break
 
         torch.cuda.empty_cache()

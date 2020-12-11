@@ -25,10 +25,10 @@ def plot_distribution(
     print("plotting image on " + path + "...")
     if (os.path.exists(path) == False):
         os.makedirs(path)
-    tsne_model = TSNE(n_components=2,
-                      learning_rate=learning_rate,
-                      n_jobs=n_jobs)
-    #  pca_model = PCA(n_components=2)
+    #  tsne_model = TSNE(n_components=2,
+    #                    learning_rate=learning_rate,
+    #                    n_jobs=n_jobs)
+    pca_model = PCA(n_components=2)
 
     data_x = np.array(data_x)
     if (len(data_x.shape) > 2):
@@ -37,8 +37,8 @@ def plot_distribution(
             data_temp.append(data.rehsape(-1))
         data_x = np.array(data_temp)
 
-    transformed = tsne_model.fit_transform(data_x)
-    #  transformed = pca_model.fit_transform(data_x)
+    #  transformed = tsne_model.fit_transform(data_x)
+    transformed = pca_model.fit_transform(data_x)
     xs = transformed[:, 0]
     ys = transformed[:, 1]
 

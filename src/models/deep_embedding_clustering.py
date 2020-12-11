@@ -219,14 +219,16 @@ class DEC_Module():
                         momentum=0.9)
         #  optimizer = Adam(params=self.dec.parameters())
 
-        data_iterator = tqdm(self.dataloader,
-                             leave='True',
-                             unit='batch',
-                             postfix={
-                                 'epoch': -1,
-                                 'acc': '%.4f' % 0.0,
-                                 'loss': '%.6f' % 0.0,
-                             })
+        data_iterator = tqdm(
+            self.dataloader,
+            leave='True',
+            unit='batch',
+            postfix={
+                'epoch': -1,
+                #  'acc': '%.4f' % 0.0,
+                'loss': '%.6f' % 0.0,
+                'dlb': '%.4f' % 0.0,
+            })
         km = KMeans(n_clusters=self.n_components,
                     n_init=max(20, self.n_hidden_features),
                     n_jobs=-1)

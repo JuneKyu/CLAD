@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from sklearn.metrics import roc_curve, auc, precision_recall_curve
 
 import config
 
@@ -11,6 +12,7 @@ import pdb
 def tpr95(name):
     # calculate the falsepositive error when tpr is 95%
 
+    # Base
     T = 1
     in_dist = np.loadtxt(config.base_in_path, delimiter=',')
     out_dist = np.loadtxt(config.base_out_path, delimiter=',')
@@ -32,7 +34,8 @@ def tpr95(name):
             total += 1
     fprBase = fpr / total
 
-    T = 1000
+    # Odin
+    T = config.temperature
     in_dist = np.loadtxt(config.odin_in_path, delimiter=',')
     out_dist = np.loadtxt(config.odin_out_path, delimiter=',')
 
@@ -60,11 +63,9 @@ def tpr95(name):
     return fprBase, fprOdin
 
 
-def auroc(name):
-    # calculate the AUROC
+def f1(name):
 
-    # TODO: adjust the length with test len
-
+    # Base
     T = 1
     in_dist = np.loadtxt(config.base_in_path, delimiter=',')
     out_dist = np.loadtxt(config.base_out_path, delimiter=',')
@@ -72,54 +73,89 @@ def auroc(name):
     Y1 = out_dist[:, 2]
     X1 = in_dist[:, 2]
 
-    # Base
-    start = 0.1
-    end = 1
-    gap = (end - start) / 100000
-    aurocBase = 0.0
-    fprTemp = 1.0
-    for delta in np.arange(start, end, gap):
-        tpr = np.sum(np.sum(X1 >= delta)) / np.float(len(X1))
-        fpr = np.sum(np.sum(Y1 > delta)) / np.float(len(Y1))
-        aurocBase += (-fpr + fprTemp) * tpr
-        fprTemp = fpr
-    aurocBase += fpr * tpr
+    scores = np.append(X1, Y1)
+    labels = []
+    for i in range(len(scores)):
+        if (i < len(X1)):
+            labels.append(0)
+        else:
+            labels.append(1)
+    precision, recall, thresholds = precision_recall_curve(labels,
+                                                           scores,
+                                                           pos_label=0)
+    f1 = 2 * (precision * recall) / (precision + recall)
+    f1Base = max(f1)
 
     # Odin
-    T = 1000
+    T = config.temperature
     in_dist = np.loadtxt(config.odin_in_path, delimiter=',')
     out_dist = np.loadtxt(config.odin_out_path, delimiter=',')
 
     Y1 = out_dist[:, 2]
     X1 = in_dist[:, 2]
 
-    start_Y = np.min(Y1)
-    start_X = np.min(X1)
-    start = min(start_Y, start_X)
-    end_Y = np.max(Y1)
-    end_X = np.max(X1)
-    end = max(end_Y, end_X)
-    gap = (end - start) / 100000
-    #  if name == 'mnist':
-    #      start = 0.1
-    #      end = 1
-    #      #  end = 0.2
-    #  else:
-    #      start = 0.1
-    #      end = 1
+    scores = np.append(X1, Y1)
+    labels = []
+    for i in range(len(scores)):
+        if (i < len(X1)):
+            labels.append(0)
+        else:
+            labels.append(1)
+    precision, recall, thresholds = precision_recall_curve(labels,
+                                                           scores,
+                                                           pos_label=0)
+    f1 = 2 * (precision * recall) / (precision + recall)
+    f1Odin = max(f1)
 
-    aurocOdin = 0.0
-    fprTemp = 1.0
-    for delta in np.arange(start, end, gap):
-        tpr = np.sum(np.sum(X1 >= delta)) / np.float(len(X1))
-        fpr = np.sum(np.sum(Y1 >= delta)) / np.float(len(Y1))
-        aurocOdin += (-fpr + fprTemp) * tpr
-        fprTemp = fpr
-    aurocOdin += fpr * tpr
+    return f1Base, f1Odin
+
+
+def auroc(name):
+    # calculate the AUROC
+    # TODO: adjust the length with test len
+
+    # Base
+    T = 1
+    in_dist = np.loadtxt(config.base_in_path, delimiter=',')
+    out_dist = np.loadtxt(config.base_out_path, delimiter=',')
+
+    Y1 = out_dist[:, 2]
+    X1 = in_dist[:, 2]
+
+    scores = np.append(X1, Y1)
+    labels = []
+    for i in range(len(scores)):
+        if (i < len(X1)):
+            labels.append(0)
+        else:
+            labels.append(1)
+    fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=0)
+    aurocBase = auc(fpr, tpr)
+
+    # Odin
+    T = config.temperature
+    in_dist = np.loadtxt(config.odin_in_path, delimiter=',')
+    out_dist = np.loadtxt(config.odin_out_path, delimiter=',')
+
+    Y1 = out_dist[:, 2]
+    X1 = in_dist[:, 2]
+
+    scores = np.append(X1, Y1)
+    labels = []
+    for i in range(len(scores)):
+        if (i < len(X1)):
+            labels.append(0)
+        else:
+            labels.append(1)
+    fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=0)
+    aurocOdin = auc(fpr, tpr)
+
     return aurocBase, aurocOdin
 
 
 def auprIn(name):
+
+    # Base
     T = 1
     in_dist = np.loadtxt(config.base_in_path, delimiter=',')
     out_dist = np.loadtxt(config.base_out_path, delimiter=',')
@@ -144,8 +180,8 @@ def auprIn(name):
         recallTemp = recall
     auprBase += recall * precision
 
-    # calculate odin algorithm
-    T = 1000
+    # Odin
+    T = config.temperature
     in_dist = np.loadtxt(config.odin_in_path, delimiter=',')
     out_dist = np.loadtxt(config.odin_out_path, delimiter=',')
     Y1 = out_dist[:, 2]
@@ -171,6 +207,8 @@ def auprIn(name):
 
 
 def auprOut(name):
+
+    # Base
     T = 1
     in_dist = np.loadtxt(config.base_in_path, delimiter=',')
     out_dist = np.loadtxt(config.base_out_path, delimiter=',')
@@ -191,8 +229,8 @@ def auprOut(name):
         recallTemp = recall
     auprBase += recall * precision
 
-    # calculate odin algorithm
-    T = 1000
+    # Odin
+    T = config.temperature
     in_dist = np.loadtxt(config.odin_in_path, delimiter=',')
     out_dist = np.loadtxt(config.odin_out_path, delimiter=',')
     Y1 = out_dist[:, 2]
@@ -219,7 +257,8 @@ def auprOut(name):
 
 def detection(name):
     # calculate the minimum detection error
-    # calculate baseline
+
+    # Base
     T = 1
     in_dist = np.loadtxt(config.base_in_path, delimiter=',')
     out_dist = np.loadtxt(config.base_out_path, delimiter=',')
@@ -234,8 +273,8 @@ def detection(name):
         error2 = np.sum(np.sum(Y1 > delta)) / np.float(len(Y1))
         errorBase = np.minimum(errorBase, (tpr + error2) / 2.0)
 
-    # calculate odin algorithm
-    T = 1000
+    # Odin
+    T = config.temperature
     in_dist = np.loadtxt(config.odin_in_path, delimiter=',')
     out_dist = np.loadtxt(config.odin_out_path, delimiter=',')
     Y1 = out_dist[:, 2]
@@ -258,30 +297,33 @@ def detection(name):
 def calculate_metric(nn):
 
     log = config.logger
+    f1Base, f1Odin = f1(nn)
     aurocBase, aurocOdin = auroc(nn)
     errorBase, errorOdin = detection(nn)
     #  tpr95Base, tpr95Odin = tpr95(nn)
     auprInBase, auprInOdin = auprIn(nn)
     auprOutBase, auprOutOdin = auprOut(nn)
-    print("                   Base,     Odin")
-    log.info("                   Base,     Odin")
-    print("auroc : {:15.2f}   , {:3.2f}".format(aurocBase * 100,
-                                                aurocOdin * 100))
-    log.info("auroc : {:15.2f}   , {:3.2f}".format(aurocBase * 100,
-                                                   aurocOdin * 100))
-    print("detection error : {:3.2f} % , {:3.2f} %".format(
-        errorBase * 100, errorOdin * 100))
-    log.info("detection error : {:3.2f} % , {:3.2f} %".format(
-        errorBase * 100, errorOdin * 100))
-    #  print("fpr at tpr 95% : {:6.2f}   , {:3.2f}".format(
-    #      tpr95Base * 100, tpr95Odin * 100))
-    #  log.info("fpr at tpr 95% : {:6.2f}   , {:3.2f}".format(
-    #      tpr95Base * 100, tpr95Odin * 100))
-    print("aupr in : {:13.2f}   , {:3.2f}".format(auprInBase * 100,
-                                                  auprInOdin * 100))
-    log.info("aupr in : {:13.2f}   , {:3.2f}".format(auprInBase * 100,
-                                                     auprInOdin * 100))
-    print("aupr out : {:12.2f}   , {:3.2f}".format(auprOutBase * 100,
-                                                   auprOutOdin * 100))
-    log.info("aupr out : {:12.2f}   , {:3.2f}".format(auprOutBase * 100,
-                                                      auprOutOdin * 100))
+    print("{:>21}{:>13}".format("Base", "Odin"))
+    log.info("{:>21}{:>13}".format("Base", "Odin"))
+    print("")
+    log.info("")
+    print("{:14}{:7.2f}%{:>12.2f}%".format("F1:", f1Base * 100, f1Odin * 100))
+    log.info("{:14}{:7.2f}%{:>12.2f}%".format("F1:", f1Base * 100,
+                                              f1Odin * 100))
+    print("{:14}{:7.2f}%{:>12.2f}%".format("AUROC:", aurocBase * 100,
+                                           aurocOdin * 100))
+    log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUROC:", aurocBase * 100,
+                                              aurocOdin * 100))
+    print("{:14}{:7.2f}%{:>12.2f}%".format("DETECTION:", errorBase * 100,
+                                           errorOdin * 100))
+    log.info("{:14}{:7.2f}%{:>12.2f}%".format("DETECTION:", errorBase * 100,
+                                              errorOdin * 100))
+    print("{:14}{:7.2f}%{:>12.2f}%".format("AUPR IN:", auprInBase * 100,
+                                           auprInOdin * 100))
+    log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUPR IN:", auprInBase * 100,
+                                              auprInOdin * 100))
+    print("{:14}{:7.2f}%{:>12.2f}%".format("AUPR OUT:", auprOutBase * 100,
+                                           auprOutOdin * 100))
+    log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUPR OUT:", auprOutBase * 100,
+                                              auprOutOdin * 100))
+    print("")
