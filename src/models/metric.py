@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import numpy as np
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 
@@ -129,6 +130,8 @@ def auroc(name):
             labels.append(0)
         else:
             labels.append(1)
+    np.save(os.path.join(config.sub_log_path, "labels_base.txt"), labels)
+    np.save(os.path.join(config.sub_log_path, "scores_base.txt"), scores)
     fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=0)
     aurocBase = auc(fpr, tpr)
 
@@ -147,6 +150,8 @@ def auroc(name):
             labels.append(0)
         else:
             labels.append(1)
+    np.save(os.path.join(config.sub_log_path, "labels_odin.txt"), labels)
+    np.save(os.path.join(config.sub_log_path, "scores_odin.txt"), scores)
     fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=0)
     aurocOdin = auc(fpr, tpr)
 
@@ -299,10 +304,10 @@ def calculate_metric(nn):
     log = config.logger
     f1Base, f1Odin = f1(nn)
     aurocBase, aurocOdin = auroc(nn)
-    errorBase, errorOdin = detection(nn)
+    #  errorBase, errorOdin = detection(nn)
     #  tpr95Base, tpr95Odin = tpr95(nn)
-    auprInBase, auprInOdin = auprIn(nn)
-    auprOutBase, auprOutOdin = auprOut(nn)
+    #  auprInBase, auprInOdin = auprIn(nn)
+    #  auprOutBase, auprOutOdin = auprOut(nn)
     print("{:>21}{:>13}".format("Base", "Odin"))
     log.info("{:>21}{:>13}".format("Base", "Odin"))
     print("")
@@ -314,16 +319,16 @@ def calculate_metric(nn):
                                            aurocOdin * 100))
     log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUROC:", aurocBase * 100,
                                               aurocOdin * 100))
-    print("{:14}{:7.2f}%{:>12.2f}%".format("DETECTION:", errorBase * 100,
-                                           errorOdin * 100))
-    log.info("{:14}{:7.2f}%{:>12.2f}%".format("DETECTION:", errorBase * 100,
-                                              errorOdin * 100))
-    print("{:14}{:7.2f}%{:>12.2f}%".format("AUPR IN:", auprInBase * 100,
-                                           auprInOdin * 100))
-    log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUPR IN:", auprInBase * 100,
-                                              auprInOdin * 100))
-    print("{:14}{:7.2f}%{:>12.2f}%".format("AUPR OUT:", auprOutBase * 100,
-                                           auprOutOdin * 100))
-    log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUPR OUT:", auprOutBase * 100,
-                                              auprOutOdin * 100))
-    print("")
+    #  print("{:14}{:7.2f}%{:>12.2f}%".format("DETECTION:", errorBase * 100,
+    #                                         errorOdin * 100))
+    #  log.info("{:14}{:7.2f}%{:>12.2f}%".format("DETECTION:", errorBase * 100,
+    #                                            errorOdin * 100))
+    #  print("{:14}{:7.2f}%{:>12.2f}%".format("AUPR IN:", auprInBase * 100,
+    #                                         auprInOdin * 100))
+    #  log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUPR IN:", auprInBase * 100,
+    #                                            auprInOdin * 100))
+    #  print("{:14}{:7.2f}%{:>12.2f}%".format("AUPR OUT:", auprOutBase * 100,
+    #                                         auprOutOdin * 100))
+    #  log.info("{:14}{:7.2f}%{:>12.2f}%".format("AUPR OUT:", auprOutBase * 100,
+    #                                            auprOutOdin * 100))
+    #  print("")

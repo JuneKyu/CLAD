@@ -19,11 +19,12 @@ def apply_odin(net, test_in, test_out):
 
     print("in-distribution data")
 
-    test_in_loader = DataLoader(test_in, batch_size=1)
-    test_out_loader = DataLoader(test_out, batch_size=1)
+    test_in_loader = DataLoader(test_in, batch_size=1, shuffle=False)
+    test_out_loader = DataLoader(test_out, batch_size=1, shuffle=False)
 
+    #  test_num = min(1000, min(len(test_in), len(test_out)))
     #  test_num = min(10000, min(len(test_in), len(test_out)))
-    test_num = min(1000, min(len(test_in), len(test_out)))
+    test_num = max(len(test_in), len(test_out))
 
     criterion = nn.CrossEntropyLoss()
     t0 = time.time()
@@ -96,7 +97,9 @@ def apply_odin(net, test_in, test_out):
 
         if j % 100 == 99:
             print("{:4}/{:4} data processed, {:.1f} seconds used.".format(
-                j + 1, test_num,
+                j + 1,
+                #  test_num,
+                len(test_in_loader),
                 time.time() - t0))
             t0 = time.time()
 
@@ -164,7 +167,9 @@ def apply_odin(net, test_in, test_out):
 
         if j % 100 == 99:
             print("{:4}/{:4} data processed, {:.1f} seconds used.".format(
-                j + 1, test_num,
+                j + 1,
+                #  test_num,
+                len(test_out_loader),
                 time.time() - t0))
             t0 = time.time()
 

@@ -126,6 +126,10 @@ class Model(object):
                                             self.clusters,
                                             n_epochs=config.classifier_epochs,
                                             lr=config.classifier_lr)
+            elif (classifier_name == 'gru'):
+                print('gru')
+
+                #  classifier =
 
             #  if (classifier_name == 'linear'):
             #      classifier = Linear_classifier(
@@ -185,8 +189,10 @@ class Model(object):
                 classifier = CNN_classifier(
                     self.train_x,
                     self.clusters,
-                    n_epochs=config.cnn_classifier_epochs,
-                    lr=config.cnn_classifier_lr,
+                    n_epochs=config.classifier_epochs,
+                    lr=config.classifier_lr,
+                    #  n_epochs=config.cnn_classifier_epochs,
+                    #  lr=config.cnn_classifier_lr,
                     batch_size=batch_size,
                     is_rgb=is_rgb)
             elif (classifier_name == 'cnn_large'):

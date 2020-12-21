@@ -21,6 +21,12 @@ import pdb
 
 import config
 
+torch.manual_seed(config.random_seed)
+torch.cuda.manual_seed(config.random_seed)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmanrk = False
+np.random.seed(config.random_seed)
+
 log = config.logger
 
 

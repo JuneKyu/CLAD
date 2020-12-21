@@ -93,6 +93,7 @@ def FC3_classifier(train_data, train_cluster, n_epochs, lr):
     #  model =
     criterion = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=lr)
+    #  optimizer = Adam(model.parameters())
 
     train_losses = np.zeros(n_epochs)
 
