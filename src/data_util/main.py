@@ -7,7 +7,9 @@ from .swat import SWaT_Dataset
 from .cola import CoLA_Dataset
 from .reuters import Reuters_Dataset
 from .mnist import MNIST_Dataset
+from .gtsrb import GTSRB_Dataset
 from .cifar10 import CIFAR10_Dataset
+from .tiny_imagenet import TINY_Imagenet_Dataset
 from config import implemented_datasets
 
 
@@ -45,6 +47,11 @@ def load_dataset(dataset_name, data_path):
         mnist_dataset = MNIST_Dataset(root_dir=data_path)
         dataset = mnist_dataset.get_dataset()
 
+    elif dataset_name == 'gtsrb':
+        print("loading gtsrb dataset...")
+        gtsrb_dataset = GTSRB_Dataset(root_dir=data_path)
+        dataset = gtsrb_dataset.get_dataset()
+
     elif dataset_name == 'cifar10':
         print('loading cifari-10 dataset...')
         cifar10_dataset = CIFAR10_Dataset(root_dir=data_path)
@@ -54,6 +61,13 @@ def load_dataset(dataset_name, data_path):
         print('loading cifar-100 dataset')
         #  cifar100_dataset =
 
+
+    elif dataset_name == 'tiny_imagenet':
+        print('loading tiny_imagenet dataset')
+        tiny_imagenet_dataset = TINY_Imagenet_Dataset(root_dir=data_path)
+        dataset = tiny_imagenet_dataset.get_dataset()
+
     #  elif dataset_name == 'stl10':
+
 
     return dataset

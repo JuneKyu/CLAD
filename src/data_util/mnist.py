@@ -48,10 +48,32 @@ class MNIST_Dataset(object):
 
 
 def mnist_dataset(directory='../data'):
+
+    # pre-calculated mean and std for each classes
+    mean_std = [([0.17339932511920858], [0.3477179330970789]),
+                ([0.07599864255996079], [0.2442815198263185]),
+                ([0.14897512882292896], [0.32592346621877916]),
+                ([0.14153014329202565], [0.3179185701004565]),
+                ([0.1213655909128458], [0.2974842743686564]),
+                ([0.12874939405756766], [0.3035884950833772]),
+                ([0.13730177522174805], [0.314897464665824]),
+                ([0.11452769775108766], [0.2916958093452544]),
+                ([0.1501559818936975], [0.3252599552279906]),
+                ([0.12258994285224596], [0.29863753746886956])]
+
+    normal_mean = 0
+    normal_std = 0
+    for i in config.normal_clas_index_list:
+        normal_mean += mean_std[i][0]
+        normal_mean += mean_std[i][1]
+    normal_mean = normal_mean / len(config.normal_class_index_list)
+    normal_std = normal_std / len(config.normal_class_index_list)
+
     mnist_data_path = directory
     mnist_transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.1307], std=[0.3081])
+        transforms.Normalize(mean=normal_mean, std=normal_std)
+        #  transforms.Normalize(mean=[0.1307], std=[0.3081])
     ])
 
     train = MNIST(mnist_data_path,
