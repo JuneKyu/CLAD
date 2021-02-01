@@ -232,7 +232,9 @@ def ResNet_classifier(train_data,
     channels = train_data.shape[1]
     height = train_data.shape[2]
     width = train_data.shape[3]
-    train_cluster = torch.from_numpy(train_cluster.cuda(config.device))
+    #  pdb.set_trace()
+    #  train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
+    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
     train = TensorDataset(train_data, train_cluster)
     train_loader = DataLoader(train,
                               batch_size=batch_size,
@@ -243,7 +245,9 @@ def ResNet_classifier(train_data,
                                  height,
                                  width,
                                  is_rgb=is_rgb)
-    model.to(config.device)
+
+    model = nn.DataParallel(model).cuda(config.device)
+    #  model.to(config.device)
     criterion = nn.CrossEntropyLoss()
     #  optimizer = Adam(model.parameters(), lr=lr)
     #  scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,

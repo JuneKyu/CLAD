@@ -1,5 +1,5 @@
 from .deep_embedding_clustering import DEC_Module
-from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier, CNN_large_classifier
+from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier, CNN_large_classifier, ResNet_classifier
 from config import implemented_cluster_models, implemented_classifier_models
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from itertools import combinations
@@ -174,14 +174,13 @@ class Model(object):
                 classifier = Linear_classifier(
                     self.train_x,
                     self.clusters,
-                    n_epochs=config.linear_classifier_epochs,
-                    lr=config.linear_classifier_lr)
+                    n_epochs=config.classifier_epochs,
+                    lr=config.classifier_lr)
             elif (classifier_name == 'fc3'):
-                classifier = FC3_classifier(
-                    self.train_x,
-                    self.clusters,
-                    n_epochs=config.fc3_classifier_epochs,
-                    lr=config.fc3_classifier_lr)
+                classifier = FC3_classifier(self.train_x,
+                                            self.clusters,
+                                            n_epochs=config.classifier_epochs,
+                                            lr=config.classifier_lr)
             elif (classifier_name == 'cnn'):  # for image data
                 batch_size = config.cnn_classifier_batch_size
                 is_rgb = config.is_rgb
@@ -200,8 +199,18 @@ class Model(object):
                 classifier = CNN_large_classifier(
                     self.train_x,
                     self.clusters,
-                    n_epochs=config.cnn_large_classifier_epochs,
-                    lr=config.cnn_large_classifier_lr,
+                    n_epochs=config.classifier_epochs,
+                    lr=config.classifier_lr,
+                    batch_size=batch_size,
+                    is_rgb=is_rgb)
+            elif (classifier_name == 'resnet'):
+                batch_size = config.resnet_classifier_batch_size
+                is_rgb = config.is_rgb
+                classifier = ResNet_classifier(
+                    self.train_x,
+                    self.clusters,
+                    n_epochs=config.resnet_classifier_epochs,
+                    lr=config.resnet_classifier_lr,
                     batch_size=batch_size,
                     is_rgb=is_rgb)
 

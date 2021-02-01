@@ -115,7 +115,6 @@ class CNN_Model(nn.Module):
                                                      self.out_features_dim))
 
     def forward(self, x):
-        #  pdb.set_trace()
         if (len(x.shape) < 4):
             x = x.reshape(1, self.channels, self.height, self.width)
         out = self.layer(x)
@@ -213,16 +212,11 @@ class ResNet_Model(ResNet):
         self.out_features_dim = config.cluster_num
         if not is_rgb:
             self.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        #  self.linear = nn.Linear(?, self.out_features_dim)
-
+ 
     def forward(self, x):
         if (len(x.shape) < 4):
             x = x.reshape(1, self.channels, self.height, self.width)
         out = super(ResNet_Model, self).forward(x)
-        #  if (x.shape[0] == 1):
-        #      out = out.view(1, -1)
-        #  else:
-        #      out = out.view(out.size(0), -1)
         return out
 
     def predict(self, x):
@@ -230,8 +224,11 @@ class ResNet_Model(ResNet):
         predicted = []
         with torch.no_grad():
             for _, image in enumerate(dataloader):
-                out = super(ResNet_Model, self).forward(x)
+                out = super(ResNet_Model, self).forward(image)
                 predict_sm = F.softmax(out)
                 predict_sm = predict_sm.detach().cpu().numpy()
-                predicted.append(np.where(predict_sm == max(predict_sm))[0][0])
+                for i in range(len(predict_sm)):
+                    predicted.append(
+                        np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+                #  predicted.append(np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
         return predicted
