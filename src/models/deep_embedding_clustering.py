@@ -101,8 +101,14 @@ class DEC_Module():
                                n_components=n_components,
                                n_hidden_features=n_hidden_features).to(
                                    config.device)
-        #  self.encoder.apply(init_weights)
-        #  self.decoder.apply(init_weights)
+
+        self.encoder.encoder_net.apply(init_weights)
+        self.decoder.decoder_net.apply(init_weights)
+        # TODO: state_dict check - weights and bias init
+        self.encoder = nn.DataParallel(self.encoder)
+        self.decoder = nn.DataParallel(self.decoder)
+
+        self.dec = nn.DataParallel(DEC(self.encoder.module))
 
     def plot_pretrain(self, encoder, decoder, n_components, epoch):
         encoder.eval()
@@ -147,8 +153,6 @@ class DEC_Module():
 
     def pretrain(self, epochs):
 
-        self.encoder = nn.DataParallel(self.encoder)
-        self.decoder = nn.DataParallel(self.decoder)
         self.encoder.to(config.device)
         self.decoder.to(config.device)
         #  gradient clipping

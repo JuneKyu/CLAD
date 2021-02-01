@@ -56,57 +56,56 @@ class Model(object):
         clustering module of the model
         """
 
-        #  run deep embedding clustering
-        #  cluster_model = DEC_Module(
-        #      train_x=self.train_x,
-        #      train_y=self.train_y,
-        #      batch_size=128,
-        #      cluster_type=self.cluster_type,
-        #      n_components=self.cluster_num,
-        #      n_hidden_features=10)  # need to be configurable
-        #  # n_hidden_features for mnist is 10
-        #  # n_hidden_features for cifar 10 is ? 30
-        #
-        #  #  cluster_model.pretrain(epochs=500, lr=0.1,
-        #  #                         momentum=0.9)  # for linear dec module
-        #  cluster_model.pretrain(epochs=300, lr=0.001, momentum=0.9)
-        #  cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
-        #  self.clusters, _ = cluster_model.predict()
-        #  self.clusters = self.clusters.numpy()
+        cluster_model = DEC_Module(dataset_name=self.dataset_name,
+                                   train_x=self.train_x,
+                                   train_y=self.train_y,
+                                   batch_size=config.dec_batch_size,
+                                   cluster_type=self.cluster_type,
+                                   n_components=self.cluster_num,
+                                   n_hidden_features=config.n_hidden_features)
 
-        if (os.path.exists(config.temp_dec_cluster)):
-            self.clusters = np.load(
-                os.path.join(config.temp_dec_cluster, "train_clusters.npy"))
+        if (config.load_cluster_model):
+            #  cluster_model.encoder.load_state_dict(
+            #      torch.load(
+            #          os.path.join(config.cluster_model_path,
+            #                       'cluster_encoder.pth')))
+            #  cluster_model.decoder.load_state_dict(
+            #      torch.load(
+            #          os.path.join(config.cluster_model_path,
+            #                       'cluster_decoder.pth')))
+            cluster_model.dec.load_state_dict(
+                torch.load(
+                    os.path.join(config.cluster_model_path,
+                                 'cluster_model.pth')))
+            cluster_model.dec.to(config.device)
         else:
-            cluster_model = DEC_Module(
-                dataset_name=self.dataset_name,
-                train_x=self.train_x,
-                train_y=self.train_y,
-                batch_size=config.dec_batch_size,  # 128
-                cluster_type=self.cluster_type,
-                n_components=self.cluster_num,
-                n_hidden_features=config.n_hidden_features)
+            cluster_model.pretrain(epochs=config.dec_pretrain_epochs)
+            cluster_model.train(epochs=config.dec_train_epochs)
 
-            #  TODO : hyperparameters should be configured.
+            if (config.save_cluster_model):
+                if (os.path.exists(config.cluster_model_path) == False):
+                    os.makedirs(config.cluster_model_path)
+                #  torch.save(
+                #      cluster_model.encoder.state_dict(),
+                #      os.path.join(config.cluster_model_path,
+                #                   'cluster_encoder.pth'))
+                #  torch.save(
+                #      cluster_model.decoder.state_dict(),
+                #      os.path.join(config.cluster_model_path,
+                #                   'cluster_decoder.pth'))
+                torch.save(
+                    cluster_model.dec.state_dict(),
+                    os.path.join(config.cluster_model_path,
+                                 'cluster_model.pth'))
 
-            # mnist - dec
-            #  cluster_model.pretrain(epochs=100, lr=0.01, momentum=0.9)
-            #  cluster_model.train(epochs=100, lr=0.01, momentum=0.9)
-
-            # mnist - conv-dec
-            #  print("conv-dec")
-            cluster_model.pretrain(epochs=100)
-            cluster_model.train(epochs=100)
-            self.clusters, _ = cluster_model.predict()
-            self.clusters = self.clusters.numpy()
-            os.makedirs(config.temp_dec_cluster)
-            np.save(os.path.join(config.temp_dec_cluster, "train_clusters"),
-                    self.clusters)
+        self.clusters, _ = cluster_model.predict()
+        self.clusters = self.clusters.numpy()
 
     def classify_nn(self, dataset_name):
+
+        #  TODO: implement save / load of classifier model
         log = config.logger
         classifier_name = config.classifier
-
         assert classifier_name in implemented_classifier_models
 
         if (dataset_name in config.cps_datasets):
@@ -215,5 +214,6 @@ class Model(object):
         print("NN Classifier training accuracy : {}".format(train_accuracy))
         log.info("NN Classifier training accuracy = {}".format(train_accuracy))
         apply_odin(classifier, self.test_in, self.test_out)
+
         print("Calculating Metrics")
         calculate_metric("mnist")

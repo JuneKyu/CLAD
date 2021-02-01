@@ -1,9 +1,6 @@
-#!/home/junekyu/anaconda3/bin python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-python main.py for anomally detection
-paper name : ''
-"""
+
 import time
 import datetime
 import os
@@ -13,11 +10,10 @@ import logging
 import numpy as np
 import warnings
 import config
+import torch
+from sklearn.svm import OneClassSVM
 from data_util.main import load_dataset
-from models.my_model import Model
-
-warnings.filterwarnings('ignore')
-
+from sklearn.metrics import roc_curve, auc
 
 # for parsing boolean type parameter
 def str2bool(v):
@@ -31,20 +27,16 @@ def str2bool(v):
 
 def main():
 
-    np.random.seed(777)
+    #  np.random.seed(777)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='../data')
     parser.add_argument('--dataset_name', type=str, default='swat')
-    parser.add_argument('--sentence_embedding',
-                        type=str,
-                        default='sentence_embedding')
     parser.add_argument('--normal_class_index_list', nargs='+',
                         default=[0])  # get a list of normal class indexes
     parser.add_argument('--cluster_num', type=int, default=5)
     parser.add_argument('--n_hidden_features', type=int, default=10)
     parser.add_argument('--cluster_type', type=str, default='gmm')
-    parser.add_argument('--dec_pretrain_epochs', type=int, default=100)
     parser.add_argument('--dec_pretrain_lr', type=float, default=0.01)
     parser.add_argument('--dec_train_epochs', type=int, default=100)
     parser.add_argument('--dec_train_lr', type=float, default=0.01)
@@ -75,7 +67,6 @@ def main():
         config.is_rgb = True
         config.cvae_channel = 3
     # if text data, set sentence embedding
-    config.sentence_embeddingm = args.sentence_embedding
     normal_class_index_list = args.normal_class_index_list
     normal_class_index_list = [int(i) for i in normal_class_index_list]
     config.normal_class_index_list = normal_class_index_list
@@ -85,10 +76,6 @@ def main():
     config.n_hidden_features = n_hidden_features
     cluster_type = args.cluster_type
     config.cluster_type = cluster_type
-    config.dec_pretrain_epochs = args.dec_pretrain_epochs
-    config.dec_pretrain_lr = args.dec_pretrain_lr
-    config.dec_train_epochs = args.dec_train_epochs
-    config.dec_train_lr = args.dec_train_lr
     config.save_cluster_model = args.save_cluster_model
     config.load_cluster_model = args.load_cluster_model
     classifier = args.classifier
@@ -155,28 +142,79 @@ def main():
     print("dataset loading successful!")
     log.info("dataset loading successful")
 
-    model = Model(dataset_name=dataset_name,
-                  dataset=dataset,
-                  cluster_num=cluster_num,
-                  cluster_type=cluster_type,
-                  classifier=classifier)
+    train_x = dataset["train_x"]
+    train_y = dataset["train_y"]
+    test_in = dataset["test_in"]
+    test_out = dataset["test_out"]
 
-    print("clustering...")
-    log.info("clustering...")
-    model.cluster()
+    print(dataset_name)
+    print(normal_class_index_list)
 
-    print("classifing...")
-    log.info("classifing...")
-    #  model.classify_naive()
-    model.classify_nn(dataset_name)
+    cls = OneClassSVM(gamma='auto')
+    # train
+    #  cls.fit(train_x)
 
-    log.info("-" * 30)
-    log.info("-" * 30)
-    log.info('FINISH')
-    log.info('%s:%s:%s' %
-             (datetime.datetime.now().hour, datetime.datetime.now().minute,
-              datetime.datetime.now().second))
+    train_x_list = []
+    for x in train_x:
+        x = x.view(-1).numpy()
+        train_x_list.append(x)
 
+    print("fitting to one_class_svm")
+    cls.fit(train_x_list)
+
+    test_in_pred = []
+    for t_i in test_in:
+        t_i = t_i.view(-1).numpy()
+        test_in_pred.append(t_i)
+
+    print("predicting test_in")
+    #  test_in_pred = cls.predict(test_in_pred)
+    test_in_pred = cls.score_samples(test_in_pred)
+
+    test_out_pred = []
+    for t_o in test_out:
+        t_o = t_o.view(-1).numpy()
+        test_out_pred.append(t_o)
+
+    print("predicting test_out")
+    #  test_out_pred = cls.predict(test_out_pred)
+    test_out_pred = cls.score_samples(test_out_pred)
+
+    #  pdb.set_trace()
+
+    labels = [0 for i in range(len(test_in_pred))] + [1 for i in range(len(test_out_pred))]
+    fpr, tpr, thresholds = roc_curve(labels, test_in_pred.tolist()+test_out_pred.tolist(), pos_label=0)
+    auroc = auc(fpr,tpr)
+    print(auroc)
+
+    #  test_in_pred = cls.predict(test_in)
+    #  test_out_pred = cls.predict(test_out)
+
+
+    #  cls = OneClassSVM(gamma='auto').fit(X)
+
+    #  model = Model(dataset_name=dataset_name,
+    #                dataset=dataset,
+    #                cluster_num=cluster_num,
+    #                cluster_type=cluster_type,
+    #                classifier=classifier)
+
+    #  print("clustering...")
+    #  log.info("clustering...")
+    #  model.cluster()
+    #
+    #  print("classifing...")
+    #  log.info("classifing...")
+    #  #  model.classify_naive()
+    #  model.classify_nn(dataset_name)
+    #
+    #  log.info("-" * 30)
+    #  log.info("-" * 30)
+    #  log.info('FINISH')
+    #  log.info('%s:%s:%s' %
+    #           (datetime.datetime.now().hour, datetime.datetime.now().minute,
+    #            datetime.datetime.now().second))
+    #
 
 if __name__ == "__main__":
     main()

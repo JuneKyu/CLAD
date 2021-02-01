@@ -18,6 +18,7 @@ cwd = os.getcwd()
 random_seed = 777
 
 torch.manual_seed(random_seed)
+torch.cuda.manual_seed(random_seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(random_seed)
@@ -32,9 +33,9 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 #  device = torch.device("cpu")
-
-#  os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-#  os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+#
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # -------------------------------
 # logger configuration
@@ -53,10 +54,10 @@ sub_log_path = os.path.join(log_path, current_time)
 # -------------------------------
 cps_datasets = ('swat')
 text_datasets = ('cola', 'reuters')
-image_datasets = ('mnist', 'cifar10')
-rgb_datasets = ('cifar10')
+image_datasets = ('mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
+rgb_datasets = ('gtsrb', 'cifar10', 'tiny_imagenet')
 
-implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'cifar10')
+implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
 implemented_nlp_embeddings = ('avg_bert', 's_bert')
 # embeddings to implement = 'avg_glove'
@@ -92,6 +93,9 @@ normal_class_index_list = [0]
 # clustering configuration
 # -------------------------------
 
+save_cluster_model = False
+load_cluster_model = False
+cluster_model_path = os.path.join(cwd, '../../cluster_model_ckp')
 # cluster specific configuration
 
 # gaussian mixture model
@@ -100,12 +104,13 @@ gmm_type = 'tied'
 #
 """ deep embedding clustering """
 plot_clustering = False
-#
+
+#  default clustering
 cluster_type = 'dec'
 
 # temp dir for debugging
 #  temp_dec_cluster = "/home/junekyu/hdd/temp_dec/"
-temp_dec_cluster = os.path.join(cwd, "../../data/temp_dec/")
+#  temp_dec_cluster = os.path.join(cwd, "../../data/temp_dec/")
 plot_path = os.path.join(sub_log_path, "clustering_plot")
 
 cluster_num = 10
@@ -169,6 +174,11 @@ ms_n_samples = 500
 # classifier configuration
 # -------------------------------
 
+save_classifier_model = False
+load_classifier_model = False
+classifier_model_path = os.path.join(cwd, '../../classifier_model_ckp')
+
+#  default classifier type
 classifier = 'linear'
 #  implemented_classifiers = ('knn', 'svm', 'linear', 'fc3', 'cnn')
 

@@ -72,6 +72,26 @@ def gtsrb_dataset(directory='../data'):
         os.remove(os.path.join(directory, 'GTSRB_Final_Training_Images.zip'))
         os.remove(os.path.join(directory, 'GTSRB_Final_Test_Images.zip'))
         os.remove(os.path.join(directory, 'GTSRB_Final_Test_GT.zip'))
+
+    train_path = os.path.join(directory, 'GTSRB/Final_Training/Images')
+    test_path = os.path.join(directory, 'GTSRB/Final_Test/Images')
+
+    speed_limits = [0, 1, 2, 3, 4, 5, 7, 8]
+    driving_instructions = [9, 10, 15, 16]
+    warnings = [11, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+    directions = [33, 34, 35, 36, 37, 38, 39, 40]
+    speicial_signs = [12, 13, 14, 17]
+    regulations = [6, 32, 41, 42]
+    total = speed_limits + driving_instructions + warnings + directions + speicial_signs + regulations
+    scenario_classes = (speed_limits, driving_instructions, warnings, directions, speicial_signs, regulations)
+    total.sort()
+
+    normal_scenario = scenario_classes[config.normal_class_index_list[0]]
+
+    normal_class_index_list = []
+    for normal in normal_scenario:
+        normal_class_index_list.append(total.index(normal))
+    config.normal_class_index_list = normal_class_index_list
     
     mean_std_pickle_path = 'gtsrb_mean_std.pkl'
     with open(os.path.join(directory, '../src/data_util/' + mean_std_pickle_path), 'rb') as f:
@@ -94,9 +114,6 @@ def gtsrb_dataset(directory='../data'):
         transforms.Normalize(mean=normal_mean, std=normal_std)
     ])
     
-    train_path = os.path.join(directory, 'GTSRB/Final_Training/Images')
-    test_path = os.path.join(directory, 'GTSRB/Final_Test/Images')
-
     if (os.path.exists(os.path.join(directory, 'GTSRB/Final_Test/Images/00000')) == False):
         divide_test_path(directory)
     train = datasets.ImageFolder(train_path, transform=gtsrb_transform)

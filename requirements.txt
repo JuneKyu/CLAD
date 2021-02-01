@@ -7,3 +7,5 @@ pip install torch torchvision
 pip install pytorch-nlp
 pip install transformers
 pip install sentence-transformers
+pip install cmake
+pip install MulticoreTSNE

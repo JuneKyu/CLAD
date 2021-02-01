@@ -21,6 +21,12 @@ data/*
 log/*
 src/softmax_scores/*
 
+
+# model checkpoints
+cluster_model_ckp/*
+classifier_model_ckp/*
+
+
 # packages
 
 

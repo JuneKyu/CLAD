@@ -3,8 +3,7 @@ import wget
 import pickle
 import zipfile
 import glob
-from shutil import move
-
+from shutil import move, copytree, rmtree
 import torch
 from torchvision import transforms
 from torchvision import datasets
@@ -37,6 +36,7 @@ class TINY_Imagenet_Dataset(object):
         self.test_in_x = torch.tensor(self.test_in_x)
         self.test_out_x = torch.tensor(self.test_out_x)
 
+
         dataset = {
             "train_x": self.train_x,
             "train_y": self.train_y,
@@ -57,6 +57,31 @@ def tiny_imagenet_dataset(directory='../data'):
         os.remove(os.path.join(directory, 'tiny-imagenet-200.zip'))
         print("labeling test dataset")
         test_dataset_labeling(os.path.join(directory, 'tiny-imagenet-200/val'))
+
+    train_path = os.path.join(directory, 'tiny-imagenet-200/train')
+    test_path = os.path.join(directory, 'tiny-imagenet-200/val')
+
+    #  animal = [5, 8, 9, 32, 34, 38, 64, 66]
+    #  insect = [13, 19, 28, 30, 31, 92, 123, 164]
+    #  instruments = [1, 2, 16, 17, 18, 21, 24, 61]
+    #  structure = [4, 41, 48, 58, 65, 69, 70, 96]
+    #  transportation = [0, 22, 23, 26, 46, 47, 156, 169]
+    animal = [66, 90, 134, 139, 148, 180, 182, 191]
+    insect = [13, 31, 92, 123, 165, 177, 196, 199]
+    instruments = [16, 17, 18, 72, 74, 116, 128, 197]
+    structure = [48, 58, 69, 96, 122, 151, 157, 178]
+    transportation = [0, 22, 23, 26, 46, 47, 156, 169]
+    total = animal + insect + instruments + structure + transportation
+    scenario_classes = (animal, insect, instruments, structure, transportation)
+    total.sort()
+
+    normal_scenario = scenario_classes[config.normal_class_index_list[0]]
+
+    #  config.normal_class_index_list
+    normal_class_index_list = []
+    for normal in normal_scenario:
+        normal_class_index_list.append(total.index(normal))
+    config.normal_class_index_list = normal_class_index_list
 
     mean_std_pickle_path = 'tiny_imagenet_200_mean_std.pkl'
     with open(os.path.join(directory, '../src/data_util/' + mean_std_pickle_path), 'rb') as f:
@@ -79,13 +104,30 @@ def tiny_imagenet_dataset(directory='../data'):
         #  transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    train_path = os.path.join(directory, 'tiny-imagenet-200/train')
-    test_path = os.path.join(directory, 'tiny-imagenet-200/val')
-
-    train = datasets.ImageFolder(train_path, transform=tiny_imagenet_transform)
-    test = datasets.ImageFolder(test_path, transform=tiny_imagenet_transform)
+    selected_train_path = select_from_data(train_path, total)
+    selected_test_path = select_from_data(test_path, total)
+    
+    train = datasets.ImageFolder(selected_train_path, transform=tiny_imagenet_transform)
+    test = datasets.ImageFolder(selected_test_path, transform=tiny_imagenet_transform)
 
     return train, test
+
+
+def select_from_data(data_path, selected_list):
+    
+    selected_path = os.path.join(data_path, 'selected')
+    if (os.path.exists(selected_path)):
+        rmtree(selected_path)
+
+    paths = glob.glob(os.path.join(data_path, '*'))
+    os.makedirs(selected_path)
+    for i, path in enumerate(paths):
+        if (i in selected_list):
+            file = path.split('/')[-1]
+            dest = os.path.join(selected_path, file)
+            copytree(path, dest)
+
+    return selected_path
 
 
 def test_dataset_labeling(test_path):
@@ -96,7 +138,7 @@ def test_dataset_labeling(test_path):
             val_dict[split_line[0]] = split_line[1]
 
     paths = glob.glob(os.path.join(test_path, 'images/*'))
-    paths[0].split('/')[-1]
+    #  paths[0].split('/')[-1]
     for path in paths:
         file = path.split('/')[-1]
         folder = val_dict[file]

@@ -4,7 +4,10 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+from torchvision.models.resnet import ResNet, BasicBlock
+
 import torch.nn.functional as F
+
 
 import numpy as np
 
@@ -18,9 +21,9 @@ import pdb
 
 
 # for linear classifier
-class LinearClassification(nn.Module):
+class Linear_Model(nn.Module):
     def __init__(self, input_dim):
-        super().__init__()
+        super(Linear_Model).__init__()
         self.out_features_dim = config.cluster_num
         self.linear = nn.Linear(input_dim, self.out_features_dim)
 
@@ -49,9 +52,9 @@ class LinearClassification(nn.Module):
         return predicted
 
 
-class FC3Classification(nn.Module):
+class FC3_Model(nn.Module):
     def __init__(self, input_dim):
-        super().__init__()
+        super(FC3_Model).__init__()
         self.out_features_dim = config.cluster_num
         self.linear1 = nn.Linear(input_dim, input_dim)
         self.linear2 = nn.Linear(input_dim, input_dim)
@@ -88,9 +91,9 @@ class FC3Classification(nn.Module):
 
 
 # for image data
-class CNNClassification(nn.Module):
+class CNN_Model(nn.Module):
     def __init__(self, batch_size, channels, height, width, is_rgb=True):
-        super(CNNClassification, self).__init__()
+        super(CNN_Model, self).__init__()
         self.batch_size = batch_size
         self.channels = channels
         self.height = height
@@ -141,9 +144,9 @@ class CNNClassification(nn.Module):
 
 
 # for image data
-class CNNLargeClassification(nn.Module):
+class CNNLarge_Model(nn.Module):
     def __init__(self, batch_size, channels, height, width, is_rgb=True):
-        super(CNNLargeClassification, self).__init__()
+        super(CNNLarge_Model, self).__init__()
         self.batch_size = batch_size
         self.channels = channels
         self.height = height
@@ -194,5 +197,41 @@ class CNNLargeClassification(nn.Module):
                 predict_sm = F.softmax(out)
                 predict_sm = predict_sm.detach().cpu().numpy()
                 #  for i in range(len(predict_sm)):
+                predicted.append(np.where(predict_sm == max(predict_sm))[0][0])
+        return predicted
+    
+
+class ResNet_Model(ResNet):
+    def __init__(self, batch_size, channels, height, width, is_rgb=True):
+        # [2, 2, 2, 2] => num of each layers
+        super(ResNet_Model, self).__init__(BasicBlock, [2, 2, 2, 2], num_classes=config.cluster_num)
+        self.batch_size = batch_size
+        self.channels = channels
+        self.height = height
+        self.width = width
+        #  self.is_rgb = is_rgb
+        self.out_features_dim = config.cluster_num
+        if not is_rgb:
+            self.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        #  self.linear = nn.Linear(?, self.out_features_dim)
+
+    def forward(self, x):
+        if (len(x.shape) < 4):
+            x = x.reshape(1, self.channels, self.height, self.width)
+        out = super(ResNet_Model, self).forward(x)
+        #  if (x.shape[0] == 1):
+        #      out = out.view(1, -1)
+        #  else:
+        #      out = out.view(out.size(0), -1)
+        return out
+
+    def predict(self, x):
+        dataloader = DataLoader(x, batch_size=128)
+        predicted = []
+        with torch.no_grad():
+            for _, image in enumerate(dataloader):
+                out = super(ResNet_Model, self).forward(x)
+                predict_sm = F.softmax(out)
+                predict_sm = predict_sm.detach().cpu().numpy()
                 predicted.append(np.where(predict_sm == max(predict_sm))[0][0])
         return predicted

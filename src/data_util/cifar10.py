@@ -82,7 +82,7 @@ def cifar10_dataset(directory='../data'):
         #                       std=[63.0 / 255, 62.1 / 255, 66.7 / 255.0])
         #  transforms.Normalize(mean=[0.4914, 0.4822, 0.4465],
         #                       std=[0.247, 0.243, 0.261])
-        transforms.Noramlize(mean=normal_mean, std=normal_std)
+        transforms.Normalize(mean=normal_mean, std=normal_std)
     ])
 
     train = CIFAR10(cifar10_data_path,
