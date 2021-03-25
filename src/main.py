@@ -14,7 +14,7 @@ import numpy as np
 import warnings
 import config
 from data_util.main import load_dataset
-from models.my_model import Model
+from models.clad import CLAD
 
 warnings.filterwarnings('ignore')
 
@@ -35,7 +35,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='../data')
-    parser.add_argument('--dataset_name', type=str, default='swat')
+    parser.add_argument('--dataset_name', type=str, default='mnist')
     parser.add_argument('--sentence_embedding',
                         type=str,
                         default='sentence_embedding')
@@ -43,14 +43,14 @@ def main():
                         default=[0])  # get a list of normal class indexes
     parser.add_argument('--cluster_num', type=int, default=5)
     parser.add_argument('--n_hidden_features', type=int, default=10)
-    parser.add_argument('--cluster_type', type=str, default='gmm')
-    parser.add_argument('--dec_pretrain_epochs', type=int, default=100)
-    parser.add_argument('--dec_pretrain_lr', type=float, default=0.01)
-    parser.add_argument('--dec_train_epochs', type=int, default=100)
-    parser.add_argument('--dec_train_lr', type=float, default=0.01)
+    parser.add_argument('--cluster_type', type=str, default='cvae')
+    parser.add_argument('--cluster_model_pretrain_epochs', type=int, default=100)
+    parser.add_argument('--cluster_model_pretrain_lr', type=float, default=0.01)
+    parser.add_argument('--cluster_model_train_epochs', type=int, default=100)
+    parser.add_argument('--cluster_model_train_lr', type=float, default=0.01)
     parser.add_argument('--save_cluster_model', type=str2bool, default=False)
     parser.add_argument('--load_cluster_model', type=str2bool, default=False)
-    parser.add_argument('--classifier', type=str, default='linear')
+    parser.add_argument('--classifier_type', type=str, default='resnet')
     parser.add_argument('--classifier_epochs', type=int, default=200)
     parser.add_argument('--classifier_lr', type=float, default=0.01)
     parser.add_argument('--save_classifier_model',
@@ -62,9 +62,6 @@ def main():
     parser.add_argument('--temperature', type=float, default=1000)
     parser.add_argument('--perturbation', type=float, default=0.001)
     parser.add_argument('--plot_clustering', type=str2bool, default=False)
-
-    #  parser.add_argument('--use_noise_labeling', type=bool, default='True')
-    # dataset_name : 'swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb'
 
     args = parser.parse_args()
 
@@ -85,14 +82,14 @@ def main():
     config.n_hidden_features = n_hidden_features
     cluster_type = args.cluster_type
     config.cluster_type = cluster_type
-    config.dec_pretrain_epochs = args.dec_pretrain_epochs
-    config.dec_pretrain_lr = args.dec_pretrain_lr
-    config.dec_train_epochs = args.dec_train_epochs
-    config.dec_train_lr = args.dec_train_lr
+    config.cluster_model_pretrain_epochs = args.cluster_model_pretrain_epochs
+    config.cluster_model_pretrain_lr = args.cluster_model_pretrain_lr
+    config.cluster_model_train_epochs = args.cluster_model_train_epochs
+    config.cluster_model_train_lr = args.cluster_model_train_lr
     config.save_cluster_model = args.save_cluster_model
     config.load_cluster_model = args.load_cluster_model
-    classifier = args.classifier
-    config.classifier = classifier
+    classifier_type = args.classifier_type
+    config.classifier_type = classifier_type
     config.classifier_epochs = args.classifier_epochs
     config.classifier_lr = args.classifier_lr
     config.save_classifier_model = args.save_classifier_model
@@ -115,7 +112,7 @@ def main():
             os.path.join(sub_log_path, config.current_time + '-' +\
             dataset_name + '-' +\
             cluster_type + '-' +\
-            classifier + '.txt'))
+            classifier_type + '.txt'))
     fileHandler.setFormatter(config.formatter)
     config.logger.addHandler(fileHandler)
 
@@ -131,14 +128,9 @@ def main():
 
     print("dataset name : " + dataset_name)
     log.info("dataset name : " + dataset_name)
-    print("classifier : " + classifier)
-    log.info("classifier : " + classifier)
+    print("classifier : " + classifier_type)
+    log.info("classifier : " + classifier_type)
 
-    # data specific parameter configurations
-    #  if (dataset_name in ("swat")) and (cluster_type in ("dec")):
-    #      config.set_dec_lower_learning_rate = True
-
-    #  if (config.dataset_name != '')
     print("normal_class_index_list : {}".format(normal_class_index_list))
     log.info("normal_class_index_list : {}".format(normal_class_index_list))
     print("n_hidden_features : {}".format(n_hidden_features))
@@ -155,19 +147,18 @@ def main():
     print("dataset loading successful!")
     log.info("dataset loading successful")
 
-    model = Model(dataset_name=dataset_name,
-                  dataset=dataset,
-                  cluster_num=cluster_num,
-                  cluster_type=cluster_type,
-                  classifier=classifier)
+    model = CLAD(dataset_name=dataset_name,
+                 dataset=dataset,
+                 cluster_num=cluster_num,
+                 cluster_type=cluster_type,
+                 classifier_type=classifier_type)
 
     print("clustering...")
     log.info("clustering...")
     model.cluster()
 
-    print("classifing...")
-    log.info("classifing...")
-    #  model.classify_naive()
+    print("classifying...")
+    log.info("classifying...")
     model.classify_nn(dataset_name)
 
     log.info("-" * 30)

@@ -10,7 +10,7 @@ import config
 import pdb
 
 
-def tpr95(name):
+def tpr95():
     # calculate the falsepositive error when tpr is 95%
 
     # Base
@@ -64,7 +64,7 @@ def tpr95(name):
     return fprBase, fprOdin
 
 
-def f1(name):
+def f1():
 
     # Base
     T = 1
@@ -111,7 +111,7 @@ def f1(name):
     return f1Base, f1Odin
 
 
-def auroc(name):
+def auroc():
     # calculate the AUROC
     # TODO: adjust the length with test len
 
@@ -134,6 +134,7 @@ def auroc(name):
     np.save(os.path.join(config.sub_log_path, "scores_base.txt"), scores)
     fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=0)
     aurocBase = auc(fpr, tpr)
+    if aurocBase < 0.5: aurocBase = 1-aurocBase
 
     # Odin
     T = config.temperature
@@ -154,11 +155,12 @@ def auroc(name):
     np.save(os.path.join(config.sub_log_path, "scores_odin.txt"), scores)
     fpr, tpr, thresholds = roc_curve(labels, scores, pos_label=0)
     aurocOdin = auc(fpr, tpr)
+    if aurocOdin < 0.5: aurocOdin = 1-aurocOdin
 
     return aurocBase, aurocOdin
 
 
-def auprIn(name):
+def auprIn():
 
     # Base
     T = 1
@@ -211,7 +213,7 @@ def auprIn(name):
     return auprBase, auprOdin
 
 
-def auprOut(name):
+def auprOut():
 
     # Base
     T = 1
@@ -260,7 +262,7 @@ def auprOut(name):
     return auprBase, auprOdin
 
 
-def detection(name):
+def detection():
     # calculate the minimum detection error
 
     # Base
@@ -299,15 +301,15 @@ def detection(name):
     return errorBase, errorOdin
 
 
-def calculate_metric(nn):
+def calculate_metric():
 
     log = config.logger
-    f1Base, f1Odin = f1(nn)
-    aurocBase, aurocOdin = auroc(nn)
-    #  errorBase, errorOdin = detection(nn)
-    #  tpr95Base, tpr95Odin = tpr95(nn)
-    #  auprInBase, auprInOdin = auprIn(nn)
-    #  auprOutBase, auprOutOdin = auprOut(nn)
+    f1Base, f1Odin = f1()
+    aurocBase, aurocOdin = auroc()
+    #  errorBase, errorOdin = detection()
+    #  tpr95Base, tpr95Odin = tpr95()
+    #  auprInBase, auprInOdin = auprIn()
+    #  auprOutBase, auprOutOdin = auprOut()
     print("{:>21}{:>13}".format("Base", "Odin"))
     log.info("{:>21}{:>13}".format("Base", "Odin"))
     print("")

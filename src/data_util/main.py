@@ -61,7 +61,6 @@ def load_dataset(dataset_name, data_path):
         print('loading cifar-100 dataset')
         #  cifar100_dataset =
 
-
     elif dataset_name == 'tiny_imagenet':
         print('loading tiny_imagenet dataset')
         tiny_imagenet_dataset = TINY_Imagenet_Dataset(root_dir=data_path)

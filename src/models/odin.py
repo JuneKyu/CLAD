@@ -22,8 +22,6 @@ def apply_odin(net, test_in, test_out):
     test_in_loader = DataLoader(test_in, batch_size=1, shuffle=False)
     test_out_loader = DataLoader(test_out, batch_size=1, shuffle=False)
 
-    #  test_num = min(1000, min(len(test_in), len(test_out)))
-    #  test_num = min(10000, min(len(test_in), len(test_out)))
     test_num = max(len(test_in), len(test_out))
 
     criterion = nn.CrossEntropyLoss()
@@ -52,10 +50,6 @@ def apply_odin(net, test_in, test_out):
         nnOutputs = nnOutputs - np.max(nnOutputs)
         nnOutputs = np.exp(nnOutputs) / np.sum(np.exp(nnOutputs))
 
-        #  print("base, in-dist, confidence")
-        #  print("{}, {}, {}\n".format(temper, noise_magnitude,
-        #                              np.max(nnOutputs)))
-
         f1.write("{}, {}, {}\n".format(temper, noise_magnitude,
                                        np.max(nnOutputs)))
 
@@ -72,12 +66,6 @@ def apply_odin(net, test_in, test_out):
         gradient = torch.ge(inputs.grad.data, 0)
         gradient = (gradient.float() - 0.5) * 2
         gradient = gradient * 50 / (79.0 / 255.0)
-        #  gradient = gradient / 0.6666  # if mnist
-        #  78.57
-        #  gradient = gradient * 50
-        #  dividing with std of mnist dataset
-        #  0.3081
-        #  gradient = gradient / (63.0 / 255.0)
 
         tempInputs = torch.add(inputs.data, -noise_magnitude, gradient)
         outputs = net(Variable(tempInputs))
@@ -89,9 +77,6 @@ def apply_odin(net, test_in, test_out):
         nnOutputs = nnOutputs - np.max(nnOutputs)
         nnOutputs = np.exp(nnOutputs) / np.sum(np.exp(nnOutputs))
 
-        #  print("odin, in_dist, confidence")
-        #  print("{}, {}, {}\n".format(temper, noise_magnitude,
-        #                              np.max(nnOutputs)))
         g1.write("{}, {}, {}\n".format(temper, noise_magnitude,
                                        np.max(nnOutputs)))
 
@@ -124,9 +109,6 @@ def apply_odin(net, test_in, test_out):
         nnOutputs = nnOutputs - np.max(nnOutputs)
         nnOutputs = np.exp(nnOutputs) / np.sum(np.exp(nnOutputs))
 
-        #  print("base, out_dist, confidence")
-        #  print("{}, {}, {}\n".format(temper, noise_magnitude,
-        #                              np.max(nnOutputs)))
         f2.write("{}, {}, {}\n".format(temper, noise_magnitude,
                                        np.max(nnOutputs)))
 
@@ -143,25 +125,18 @@ def apply_odin(net, test_in, test_out):
         # Normalizing the gradient to binary in {0, 1}
         gradient = torch.ge(inputs.grad.data, 0)
         gradient = (gradient.float() - 0.5) * 2
-        # Normalizing the gradient to the same space of image
-        #  gradient = gradient / (63.0 / 255.0)
-        #  gradient = gradient / 0.6666  # if mnist
         gradient = gradient * 50 / (79.0 / 255.0)
-        #  0.6665700000000001
-        # Adding small perturbations to images
+
         tempInputs = torch.add(inputs.data, -noise_magnitude, gradient)
         outputs = net(Variable(tempInputs))
         outputs = outputs / temper
-        # Calculating the confidence after adding perturbations
+
         nnOutputs = outputs.data.cpu()
         nnOutputs = nnOutputs.numpy()
         nnOutputs = nnOutputs[0]
         nnOutputs = nnOutputs - np.max(nnOutputs)
         nnOutputs = np.exp(nnOutputs) / np.sum(np.exp(nnOutputs))
 
-        #  print("odin, out_dist, confidence")
-        #  print("{}, {}, {}\n".format(temper, noise_magnitude,
-        #                              np.max(nnOutputs)))
         g2.write("{}, {}, {}\n".format(temper, noise_magnitude,
                                        np.max(nnOutputs)))
 

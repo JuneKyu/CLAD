@@ -1,5 +1,5 @@
-from .deep_embedding_clustering import DEC_Module
-from .classifiers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier, CNN_large_classifier, ResNet_classifier
+from .clustering_model import Clustering_Module
+from .confidence_trainers import KNN_classifier, SVM_classifier, Linear_classifier, FC3_classifier, CNN_classifier, CNN_large_classifier, ResNet_classifier
 from config import implemented_cluster_models, implemented_classifier_models
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from itertools import combinations
@@ -20,7 +20,7 @@ import pdb
 np.random.seed(777)
 
 
-class Model(object):
+class CLAD(object):
     """
     self.train_pred_label = predicted label from clustering model
     self.val_pred_label =
@@ -28,12 +28,10 @@ class Model(object):
     self.cluster_model =
     """
     def __init__(self, dataset_name, dataset, cluster_num, cluster_type,
-                 classifier):
+                 classifier_type):
         """TODO: to be defined. """
 
         self.dataset_name = dataset_name
-        #  self.dec_train = dataset["dec_train"]
-        #  self.dec_train_y = dataset["dec_train_y"]
         self.train_x = dataset["train_x"]
         self.train_y = dataset["train_y"]
         self.test_in = dataset["test_in"]
@@ -46,23 +44,24 @@ class Model(object):
         self.cluster_model = None
 
         # classifier variables
-        self.classifier_type = classifier
+        self.classifier_type = classifier_type
 
         assert cluster_type in implemented_cluster_models
-        assert classifier in implemented_classifier_models
+        assert classifier_type in implemented_classifier_models
 
     def cluster(self):
         """
         clustering module of the model
         """
 
-        cluster_model = DEC_Module(dataset_name=self.dataset_name,
-                                   train_x=self.train_x,
-                                   train_y=self.train_y,
-                                   batch_size=config.dec_batch_size,
-                                   cluster_type=self.cluster_type,
-                                   n_components=self.cluster_num,
-                                   n_hidden_features=config.n_hidden_features)
+        cluster_model = Clustering_Module(
+            dataset_name=self.dataset_name,
+            train_x=self.train_x,
+            train_y=self.train_y,
+            batch_size=config.cluster_model_batch_size,
+            cluster_type=self.cluster_type,
+            n_components=self.cluster_num,
+            n_hidden_features=config.n_hidden_features)
 
         if (config.load_cluster_model):
             #  cluster_model.encoder.load_state_dict(
@@ -73,14 +72,14 @@ class Model(object):
             #      torch.load(
             #          os.path.join(config.cluster_model_path,
             #                       'cluster_decoder.pth')))
-            cluster_model.dec.load_state_dict(
+            cluster_model.cm.load_state_dict(
                 torch.load(
                     os.path.join(config.cluster_model_path,
                                  'cluster_model.pth')))
-            cluster_model.dec.to(config.device)
+            cluster_model.cm.to(config.device)
         else:
-            cluster_model.pretrain(epochs=config.dec_pretrain_epochs)
-            cluster_model.train(epochs=config.dec_train_epochs)
+            cluster_model.pretrain(epochs=config.cluster_model_pretrain_epochs)
+            cluster_model.train(epochs=config.cluster_model_train_epochs)
 
             if (config.save_cluster_model):
                 if (os.path.exists(config.cluster_model_path) == False):
@@ -94,7 +93,7 @@ class Model(object):
                 #      os.path.join(config.cluster_model_path,
                 #                   'cluster_decoder.pth'))
                 torch.save(
-                    cluster_model.dec.state_dict(),
+                    cluster_model.cm.state_dict(),
                     os.path.join(config.cluster_model_path,
                                  'cluster_model.pth'))
 
@@ -105,27 +104,27 @@ class Model(object):
 
         #  TODO: implement save / load of classifier model
         log = config.logger
-        classifier_name = config.classifier
-        assert classifier_name in implemented_classifier_models
+        classifier_type = config.classifier_type
+        assert classifier_type in implemented_classifier_models
 
         if (dataset_name in config.cps_datasets):
             print("classifier")
             print("epoch: {}".format(config.classifier_epochs))
             print("lr: {}".format(config.classifier_lr))
-            if (classifier_name == 'linear'):
+            if (classifier_type == 'linear'):
                 print('linear')
                 classifier = Linear_classifier(
                     self.train_x,
                     self.clusters,
                     n_epochs=config.classifier_epochs,
                     lr=config.classifier_lr)
-            elif (classifier_name == 'fc3'):
+            elif (classifier_type == 'fc3'):
                 print('fc3')
                 classifier = FC3_classifier(self.train_x,
                                             self.clusters,
                                             n_epochs=config.classifier_epochs,
                                             lr=config.classifier_lr)
-            elif (classifier_name == 'gru'):
+            elif (classifier_type == 'gru'):
                 print('gru')
 
                 #  classifier =
@@ -166,22 +165,22 @@ class Model(object):
             #  self.test_x, self.test_clusters)
         elif (dataset_name in config.image_datasets):
 
-            if (classifier_name == 'knn'):
+            if (classifier_type == 'knn'):
                 print("")
-            elif (classifier_name == 'svm'):
+            elif (classifier_type == 'svm'):
                 print("")
-            elif (classifier_name == 'linear'):
+            elif (classifier_type == 'linear'):
                 classifier = Linear_classifier(
                     self.train_x,
                     self.clusters,
                     n_epochs=config.classifier_epochs,
                     lr=config.classifier_lr)
-            elif (classifier_name == 'fc3'):
+            elif (classifier_type == 'fc3'):
                 classifier = FC3_classifier(self.train_x,
                                             self.clusters,
                                             n_epochs=config.classifier_epochs,
                                             lr=config.classifier_lr)
-            elif (classifier_name == 'cnn'):  # for image data
+            elif (classifier_type == 'cnn'):  # for image data
                 batch_size = config.cnn_classifier_batch_size
                 is_rgb = config.is_rgb
                 classifier = CNN_classifier(
@@ -193,7 +192,7 @@ class Model(object):
                     #  lr=config.cnn_classifier_lr,
                     batch_size=batch_size,
                     is_rgb=is_rgb)
-            elif (classifier_name == 'cnn_large'):
+            elif (classifier_type == 'cnn_large'):
                 batch_size = config.cnn_large_classifier_batch_size
                 is_rgb = config.is_rgb
                 classifier = CNN_large_classifier(
@@ -203,26 +202,31 @@ class Model(object):
                     lr=config.classifier_lr,
                     batch_size=batch_size,
                     is_rgb=is_rgb)
-            elif (classifier_name == 'resnet'):
+            elif (classifier_type == 'resnet'):
                 batch_size = config.resnet_classifier_batch_size
                 is_rgb = config.is_rgb
                 classifier = ResNet_classifier(
                     self.train_x,
                     self.clusters,
-                    n_epochs=config.resnet_classifier_epochs,
-                    lr=config.resnet_classifier_lr,
+                    n_epochs=config.classifier_epochs,
+                    lr=config.classifier_lr,
                     batch_size=batch_size,
                     is_rgb=is_rgb)
 
+
+        # confidence trainer accuracy
         print("Calculating NN Classifier training accuracy...")
         train_pred = classifier.module.predict(self.train_x.cuda(
             config.device))
         train_accuracy = accuracy_score(train_pred, self.clusters)
         torch.cuda.empty_cache()
-
         print("NN Classifier training accuracy : {}".format(train_accuracy))
         log.info("NN Classifier training accuracy = {}".format(train_accuracy))
+
+
+
+        print("Scailing the confidence outputs")
         apply_odin(classifier, self.test_in, self.test_out)
 
         print("Calculating Metrics")
-        calculate_metric("mnist")
+        calculate_metric()

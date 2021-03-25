@@ -11,7 +11,9 @@ import numpy as np
 import warnings
 import config
 import torch
-from sklearn.svm import OneClassSVM
+#  from sklearn.svm import OneClassSVM
+from svdd_src.svdd import SVDD
+from svdd_src.visualize import Visualization as draw
 from data_util.main import load_dataset
 from sklearn.metrics import roc_curve, auc
 
@@ -54,6 +56,7 @@ def main():
     parser.add_argument('--temperature', type=float, default=1000)
     parser.add_argument('--perturbation', type=float, default=0.001)
     parser.add_argument('--plot_clustering', type=str2bool, default=False)
+    parser.add_argument('--width_factor', type=float, default=80)
 
     #  parser.add_argument('--use_noise_labeling', type=bool, default='True')
     # dataset_name : 'swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb'
@@ -106,21 +109,21 @@ def main():
     fileHandler.setFormatter(config.formatter)
     config.logger.addHandler(fileHandler)
 
-    log.info("-" * 99)
-    log.info("-" * 10 + str(args) + "-" * 10)
-    log.info("-" * 99)
-    log.info('START %s:%s:%s\n' %
-             (datetime.datetime.now().hour, datetime.datetime.now().minute,
-              datetime.datetime.now().second))
-    log.info('%s:%s:%s\n' %
-             (datetime.datetime.now().hour, datetime.datetime.now().minute,
-              datetime.datetime.now().second))
+    #  log.info("-" * 99)
+    #  log.info("-" * 10 + str(args) + "-" * 10)
+    #  log.info("-" * 99)
+    #  log.info('START %s:%s:%s\n' %
+    #           (datetime.datetime.now().hour, datetime.datetime.now().minute,
+    #            datetime.datetime.now().second))
+    #  log.info('%s:%s:%s\n' %
+    #           (datetime.datetime.now().hour, datetime.datetime.now().minute,
+    #            datetime.datetime.now().second))
 
     print("dataset name : " + dataset_name)
     log.info("dataset name : " + dataset_name)
-    print("classifier : " + classifier)
-    log.info("classifier : " + classifier)
-
+    #  print("classifier : " + classifier)
+    #  log.info("classifier : " + classifier)
+    #
     # data specific parameter configurations
     #  if (dataset_name in ("swat")) and (cluster_type in ("dec")):
     #      config.set_dec_lower_learning_rate = True
@@ -128,12 +131,12 @@ def main():
     #  if (config.dataset_name != '')
     print("normal_class_index_list : {}".format(normal_class_index_list))
     log.info("normal_class_index_list : {}".format(normal_class_index_list))
-    print("n_hidden_features : {}".format(n_hidden_features))
-    log.info("n_hidden_features : {}".format(n_hidden_features))
-    print("temperature : {}".format(temperature))
-    log.info("temperature : {}".format(temperature))
-    print("perturbation : {}".format(perturbation))
-    log.info("perturbation : {}".format(perturbation))
+    #  print("n_hidden_features : {}".format(n_hidden_features))
+    #  log.info("n_hidden_features : {}".format(n_hidden_features))
+    #  print("temperature : {}".format(temperature))
+    #  log.info("temperature : {}".format(temperature))
+    #  print("perturbation : {}".format(perturbation))
+    #  log.info("perturbation : {}".format(perturbation))
 
     # loading dataset
     dataset = load_dataset(dataset_name=dataset_name, data_path=data_path)
@@ -150,7 +153,14 @@ def main():
     print(dataset_name)
     print(normal_class_index_list)
 
-    cls = OneClassSVM(gamma='auto')
+    parameters = {"positive penalty": 0.9,
+                  "negative penalty": [],
+                  #  "kernel": {"type": 'gauss', "width": 1/80},
+                  "kernel": {"type": 'gauss', "width": 1/args.width_factor},
+                  "option": {"display": 'on'}}
+
+    svdd = SVDD(parameters)
+    #  cls = OneClassSVM(gamma='auto')
     # train
     #  cls.fit(train_x)
 
@@ -159,31 +169,38 @@ def main():
         x = x.view(-1).numpy()
         train_x_list.append(x)
 
-    print("fitting to one_class_svm")
-    cls.fit(train_x_list)
+    train_y_list = [0] * len(train_x_list)
+
+    print("fitting to svdd")
+    train_x = np.array(train_x_list)
+    train_y = np.array(train_y_list).reshape(-1, 1)
+    svdd.train(train_x, train_y)
 
     test_in_pred = []
     for t_i in test_in:
         t_i = t_i.view(-1).numpy()
         test_in_pred.append(t_i)
 
-    print("predicting test_in")
+    #  print("predicting test_in")
     #  test_in_pred = cls.predict(test_in_pred)
-    test_in_pred = cls.score_samples(test_in_pred)
+    #  test_in_pred = cls.score_samples(test_in_pred)
 
     test_out_pred = []
     for t_o in test_out:
         t_o = t_o.view(-1).numpy()
         test_out_pred.append(t_o)
 
-    print("predicting test_out")
+    #  print("predicting test_out")
     #  test_out_pred = cls.predict(test_out_pred)
-    test_out_pred = cls.score_samples(test_out_pred)
+    #  test_out_pred = cls.score_samples(test_out_pred)
+    #  testData = test_in_pred.tolist()+test_out_pred.tolist()
+    testData = test_in_pred + test_out_pred
+    testLabel = [0 for i in range(len(test_in_pred))] + [1 for i in range(len(test_out_pred))]
 
-    labels = [0 for i in range(len(test_in_pred))] + [1 for i in range(len(test_out_pred))]
-    fpr, tpr, thresholds = roc_curve(labels, test_in_pred.tolist()+test_out_pred.tolist(), pos_label=0)
-    auroc = auc(fpr,tpr)
-    print(auroc)
+    testData = np.array(testData)
+    testLabel = np.array(testLabel)
+    distance, accuracy = svdd.test(testData, testLabel)
+    print(accuracy)
 
     #  test_in_pred = cls.predict(test_in)
     #  test_out_pred = cls.predict(test_out)
@@ -216,3 +233,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

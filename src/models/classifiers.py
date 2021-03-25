@@ -1,394 +1,234 @@
-#!/usr/bin/env python3
-# -*- codeing: utf-8 -*-
-
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn import svm
-import numpy as np
-import time
-import math
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import torch
 from torch import nn
-import torch.nn.functional as F
-from torch.optim import Adam, lr_scheduler
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader
+from torchvision.models.resnet import ResNet, BasicBlock
 
-from models.models import Linear_Model
-from models.models import FC3_Model
-from models.models import CNN_Model
-from models.models import CNNLarge_Model
-from models.models import ResNet_Model
+import torch.nn.functional as F
+
+
+import numpy as np
 
 import config
 
 import pdb
 
 # -------------------------
-# Naive ML-based classifier
+# Neural-Network-based classifier
 # -------------------------
 
 
-# KNN
-def KNN_classifier(n_neighbors, train_data, train_label):
-    model = KNeighborsClassifier(n_neighbors=n_neighbors)
-    model.fit(train_data, train_label)
-    return model
+# for linear classifier
+class Linear_Model(nn.Module):
+    def __init__(self, input_dim):
+        super(Linear_Model).__init__()
+        self.out_features_dim = config.cluster_num
+        self.linear = nn.Linear(input_dim, self.out_features_dim)
+
+    def forward(self, x):
+        if (len(x.shape) >= 4):
+            x = torch.reshape(x, (len(x), -1))
+        elif (len(x.shape) >= 3):
+            x = torch.reshape(x, (1, -1))
+        return self.linear(x)
+
+    def predict(self, x):
+        if (len(x.shape) >= 4):
+            x = torch.reshape(x, (len(x), -1))
+        elif (len(x.shape) >= 3):
+            x = torch.reshape(x, (1, -1))
+        dataloader = DataLoader(x, batch_size=128)
+        predicted = []
+        with torch.no_grad():
+            for _, data in enumerate(dataloader):
+                out_features = self.linear(data)
+                predict_sm = F.softmax(out_features)
+                predict_sm = predict_sm.detach().cpu().numpy()
+                for i in range(len(predict_sm)):
+                    predicted.append(
+                        np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+        return predicted
 
 
-# svm
-def SVM_classifier(gamma, C, train_data, train_label):
-    model = svm.SVC(gamma=gamma, C=C)
-    model.fit(train_data, train_label)
-    return model
+class FC3_Model(nn.Module):
+    def __init__(self, input_dim):
+        super(FC3_Model).__init__()
+        self.out_features_dim = config.cluster_num
+        self.linear1 = nn.Linear(input_dim, input_dim)
+        self.linear2 = nn.Linear(input_dim, input_dim)
+        self.linear3 = nn.Linear(input_dim, self.out_features_dim)
+
+    def forward(self, x):
+        if (len(x.shape) >= 4):
+            x = torch.reshape(x, (len(x), -1))
+        elif (len(x.shape) >= 3):
+            x = torch.reshape(x, (1, -1))
+        output1 = self.linear1(x)
+        output2 = self.linear2(output1)
+        output3 = self.linear3(output2)
+        return output3
+
+    def predict(self, x):
+        if (len(x.shape) >= 4):
+            x = torch.reshape(x, (len(x), -1))
+        elif (len(x.shape) >= 3):
+            x = torch.reshape(x, (1, -1))
+        dataloader = DataLoader(x, batch_size=128)
+        predicted = []
+        with torch.no_grad():
+            for _, data in enumerate(dataloader):
+                out_features1 = self.linear1(data)
+                out_features2 = self.linear2(out_features1)
+                out_features3 = self.linear3(out_features2)
+                predict_sm = F.softmax(out_features3)
+                predict_sm = predict_sm.detach().cpu().numpy()
+                for i in range(len(predict_sm)):
+                    predicted.append(
+                        np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+        return predicted
 
 
-# for basic test
-def Linear_classifier(train_data, train_cluster, n_epochs, lr):
-    if (len(train_data) > 2):
-        train_data = torch.reshape(train_data, (len(train_data), -1))
+# for image data
+class CNN_Model(nn.Module):
+    def __init__(self, batch_size, channels, height, width, is_rgb=True):
+        super(CNN_Model, self).__init__()
+        self.batch_size = batch_size
+        self.channels = channels
+        self.height = height
+        self.width = width
+        self.out_features_dim = config.cluster_num
 
-    _, input_size = train_data.shape
+        self.layer = nn.Sequential(nn.Conv2d(self.channels, 16, 3, padding=1),
+                                   nn.BatchNorm2d(16), nn.ReLU(),
+                                   nn.Conv2d(16, 32, 3, padding=1),
+                                   nn.BatchNorm2d(32), nn.ReLU(),
+                                   nn.MaxPool2d(2, 2),
+                                   nn.Conv2d(32, 64, 3, padding=1),
+                                   nn.BatchNorm2d(64), nn.ReLU(),
+                                   nn.MaxPool2d(2, 2))
+        self.fc_layer = nn.Sequential(
+            nn.Linear(64 * (self.height // 4) * (self.width // 4), 128),
+            nn.BatchNorm1d(128), nn.ReLU(), nn.Linear(128, 64),
+            nn.BatchNorm1d(64), nn.ReLU(), nn.Linear(64,
+                                                     self.out_features_dim))
 
-    scaler = StandardScaler()
-    train_data = scaler.fit_transform(train_data)
-    #  test_data = scaler.fit_transform(test_data)
+    def forward(self, x):
+        if (len(x.shape) < 4):
+            x = x.reshape(1, self.channels, self.height, self.width)
+        out = self.layer(x)
+        if (x.shape[0] == 1):
+            out = out.view(1, -1)
+        else:
+            out = out.view(out.size(0), -1)
+        out = self.fc_layer(out)
+        return out
 
-    train_data = torch.from_numpy(train_data.astype(np.float32)).cuda(
-        config.device)
-    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-
-    model = Linear_Model(input_dim=input_size)
-    model = nn.DataParallel(model).cuda(config.device)
-    criterion = nn.CrossEntropyLoss()  # Log Softmax + ClassNLL Loss
-    optimizer = Adam(model.parameters(), lr=lr)
-
-    for iter_ in range(n_epochs):
-        outputs = model(train_data)
-        outputs = torch.squeeze(outputs)
-        loss = criterion(outputs, train_cluster)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        # TODO: loss can be ploted
-        #  train_losses[iter_] = loss.item()
-        if (iter_ + 1) % 10 == 0:
-            print("Epoch {}/{}, Training loss: {}".format(
-                (iter_ + 1), n_epochs, loss.item()))
-    return model
-
-
-# for basic test
-def FC3_classifier(train_data, train_cluster, n_epochs, lr):
-    if (len(train_data) > 2):
-        train_data = torch.reshape(train_data, (len(train_data), -1))
-
-    _, input_size = train_data.shape
-    scaler = StandardScaler()
-    train_data = scaler.fit_transform(train_data)
-    train_data = torch.from_numpy(train_data.astype(np.float32)).cuda(
-        config.device)
-    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    model = FC3_Model(input_dim=input_size)
-    model = nn.DataParallel(model).cuda(config.device)
-    #  model =
-    criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=lr)
-    #  optimizer = Adam(model.parameters())
-
-    train_losses = np.zeros(n_epochs)
-
-    for iter_ in range(n_epochs):
-        outputs = model(train_data)
-        outputs = torch.squeeze(outputs)
-        loss = criterion(outputs, train_cluster)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        if (iter_ + 1) % 10 == 0:
-            print("Epoch {}/{}, Training loss: {}".format(
-                (iter_ + 1), n_epochs, loss.item()))
-    return model
+    def predict(self, x):
+        dataloader = DataLoader(x, batch_size=128)
+        predicted = []
+        with torch.no_grad():
+            # data size adjustment
+            for _, image in enumerate(dataloader):
+                out = self.layer(image)
+                out = out.view(image.shape[0], -1)
+                out = self.fc_layer(out)
+                predict_sm = F.softmax(out)
+                predict_sm = predict_sm.detach().cpu().numpy()
+                for i in range(len(predict_sm)):
+                    predicted.append(
+                        np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+        return predicted
 
 
-# batch_size, isRGB needs to be specified
-def CNN_classifier(train_data,
-                   train_cluster,
-                   n_epochs,
-                   lr,
-                   batch_size=100,
-                   is_rgb=False):
+# for image data
+class CNNLarge_Model(nn.Module):
+    def __init__(self, batch_size, channels, height, width, is_rgb=True):
+        super(CNNLarge_Model, self).__init__()
+        self.batch_size = batch_size
+        self.channels = channels
+        self.height = height
+        self.width = width
+        self.out_features_dim = config.cluster_num
+        self.layer = nn.Sequential(
+            nn.Conv2d(in_channels=self.channels,
+                      out_channels=self.channels * 8,
+                      kernel_size=3,
+                      padding=1), nn.BatchNorm2d(self.channels * 8), nn.ELU(),
+            nn.Conv2d(in_channels=self.channels * 8,
+                      out_channels=self.channels * 16,
+                      kernel_size=3,
+                      padding=1), nn.BatchNorm2d(self.channels * 16), nn.ELU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(in_channels=self.channels * 16,
+                      out_channels=self.channels * 32,
+                      kernel_size=3,
+                      padding=1), nn.BatchNorm2d(self.channels * 32),
+            nn.ReLU(), nn.MaxPool2d(2, 2))
+        self.fc_layer = nn.Sequential(
+            nn.Linear(
+                self.channels * 32 * (self.height // 4) * (self.width // 4),
+                128), nn.BatchNorm1d(128), nn.ReLU(), nn.Linear(128, 64),
+            nn.BatchNorm1d(64), nn.ReLU(), nn.Linear(64,
+                                                     self.out_features_dim))
 
-    input_size = train_data.shape[0]
-    channels = train_data.shape[1]
-    height = train_data.shape[2]
-    width = train_data.shape[3]
-    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    train = TensorDataset(train_data, train_cluster)
-    train_loader = DataLoader(train,
-                              batch_size=batch_size,
-                              shuffle=True,
-                              drop_last=True)
+    def forward(self, x):
+        if (len(x.shape) < 4):
+            x = x.reshape(1, self.channels, self.height, self.width)
+        out = self.layer(x)
+        if (x.shape[0] == 1):
+            out = out.view(1, -1)
+        else:
+            out = out.view(out.size(0), -1)
+        out = self.fc_layer(out)
+        return out
 
-    model = CNN_Model(batch_size,
-                              channels,
-                              height,
-                              width,
-                              is_rgb=is_rgb)
-    model = model.cuda(config.device)
-    model = nn.DataParallel(model)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=lr)
-    #  optimizer = Adam(model.parameters())
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
-                                               threshold=0.1,
-                                               patience=1,
-                                               mode='min')
+    def predict(self, x):
+        dataloader = DataLoader(x, batch_size=128)
 
-    for iter_ in range(n_epochs):
-        for _, [image, label] in enumerate(train_loader):
-            image = image.to(config.device)
-            label = label.to(config.device)
-            outputs = model(image)
+        predicted = []
+        with torch.no_grad():
+            for _, image in enumerate(dataloader):
+                out = self.layer(image)
+                out = out.view(image.shape[0], -1)
+                out = self.fc_layer(out)
+                predict_sm = F.softmax(out)
+                predict_sm = predict_sm.detach().cpu().numpy()
+                #  for i in range(len(predict_sm)):
+                predicted.append(np.where(predict_sm == max(predict_sm))[0][0])
+        return predicted
+    
 
-            loss = criterion(outputs, label)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        scheduler.step(loss)
+class ResNet_Model(ResNet):
+    def __init__(self, batch_size, channels, height, width, is_rgb=True):
+        # [2, 2, 2, 2] => num of each layers
+        super(ResNet_Model, self).__init__(BasicBlock, [2, 2, 2, 2], num_classes=config.cluster_num)
+        self.batch_size = batch_size
+        self.channels = channels
+        self.height = height
+        self.width = width
+        #  self.is_rgb = is_rgb
+        self.out_features_dim = config.cluster_num
+        if not is_rgb:
+            self.conv1 = torch.nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+ 
+    def forward(self, x):
+        if (len(x.shape) < 4):
+            x = x.reshape(1, self.channels, self.height, self.width)
+        out = super(ResNet_Model, self).forward(x)
+        return out
 
-        #  if (iter_ + 1) % 10 == 0:
-        #      print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-        #                                                            n_epochs,
-        #                                                            loss.item()))
-        print("Epoch {}/{}, Training loss: {}".format((iter_ + 1), n_epochs,
-                                                      loss.item()))
-
-    return model
-
-
-def CNN_large_classifier(train_data,
-                         train_cluster,
-                         n_epochs,
-                         lr,
-                         batch_size=100,
-                         is_rgb=False):
-
-    input_size = train_data.shape[0]
-    channels = train_data.shape[1]
-    height = train_data.shape[2]
-    width = train_data.shape[3]
-    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    train = TensorDataset(train_data, train_cluster)
-    train_loader = DataLoader(train,
-                              batch_size=batch_size,
-                              shuffle=True,
-                              drop_last=True)
-
-    model = CNN_Model(batch_size,
-                                   channels,
-                                   height,
-                                   width,
-                                   is_rgb=is_rgb)
-    model.to(config.device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=lr)
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
-                                               threshold=0.1,
-                                               patience=1,
-                                               mode='min')
-
-    for iter_ in range(n_epochs):
-        for _, [image, label] in enumerate(train_loader):
-            image = image.to(config.device)
-            label = label.to(config.device)
-            outputs = model(image)
-
-            loss = criterion(outputs, label)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        scheduler.step(loss)
-
-        #  if (iter_ + 1) % 10 == 0:
-        #      print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-        #                                                            n_epochs,
-        #                                                            loss.item()))
-        print("Epoch {}/{}, Training loss: {}".format((iter_ + 1), n_epochs,
-                                                      loss.item()))
-    return model
-
-
-
-
-def ResNet_classifier(train_data,
-                      train_cluster,
-                      n_epochs,
-                      lr,
-                      batch_size=100,
-                      is_rgb=False):
-    input_size = train_data.shape[0]
-    channels = train_data.shape[1]
-    height = train_data.shape[2]
-    width = train_data.shape[3]
-    #  pdb.set_trace()
-    #  train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    train_cluster = torch.from_numpy(train_cluster).cuda(config.device)
-    train = TensorDataset(train_data, train_cluster)
-    train_loader = DataLoader(train,
-                              batch_size=batch_size,
-                              shuffle=True,
-                              drop_last=True)
-    model = ResNet_Model(batch_size,
-                                 channels,
-                                 height,
-                                 width,
-                                 is_rgb=is_rgb)
-
-    model = nn.DataParallel(model).cuda(config.device)
-    #  model.to(config.device)
-    criterion = nn.CrossEntropyLoss()
-    #  optimizer = Adam(model.parameters(), lr=lr)
-    #  scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
-    #                                             threshold=0.1,
-    #                                             patience=1,
-    #                                             mode='min')
-    optimizer = Adam(model.parameters())
-    for iter_ in range(n_epochs):
-        for _, [image, label] in enumerate(train_loader):
-            image = image.to(config.device)
-            label = label.to(config.device)
-            outputs = model(image)
-
-            loss = criterion(outputs, label)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-#          scheduler.step(loss)
-
-        #  if (iter_ + 1) % 10 == 0:
-        #      print("In this epoch {}/{}, Training loss: {}".format((iter_ + 1),
-        #                                                            n_epochs,
-        #                                                            loss.item()))
-        print("Epoch {}/{}, Training loss: {}".format((iter_ + 1), n_epochs,
-                                                      loss.item()))
-    return model
-
-
-
-
-# for text classifier
-class Text_GRUNet(nn.Module):
-    def __init__(self,
-                 input_dim,
-                 hidden_dim,
-                 output_dim,
-                 n_layers=2,
-                 drop_prob=0.2):
-        super(Text_GRUNet, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.n_layers = n_layers
-
-        self.gru = nn.GRU(input_dim,
-                          hidden_dim,
-                          n_layers,
-                          batch_first=True,
-                          dropout=drop_prob)
-        self.fc = nn.Linear(hidden_dim, output_dim)
-        self.relu = nn.ReLU()
-
-    def forward(self, x, h):
-        out, h = self.gru(x, h)
-        out = self.fc(self.relu(out[:, -1]))
-        return out, h
-
-    def init_hidden(self, batch_size):
-        weight = next(self.parameters()).data
-        hidden = weight.new(self.n_layers, batch_size,
-                            self.hidden_dim).zero_().to(config.device)
-        return hidden
-
-
-def GRU_text_classifier(train_data, train_label, test_data, test_label,
-                        n_epochs, lr):
-
-    input_size = len(train_data[0])
-    train_label = torch.tensor(train_label)
-    train_loader = DataLoader(TensorDataset(train_data, train_label),
-                              shuffle=True,
-                              batch_size=config.text_classifier_batch_size,
-                              drop_last=True)
-
-    model = Text_GRUNet(input_dim=input_size,
-                        hidden_dim=config.text_classifier_hidden_size,
-                        output_dim=config.text_classifier_output_size)
-    model.to(config.device)
-    #  criterion = nn.MSELoss()
-    criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=lr)
-    # gradient clipping if needed
-    model.train()
-    print("training text classifier...")
-
-    num_epoch = config.text_classifier_epoch
-    batch_size = config.text_classifier_batch_size
-    epoch_times = []
-    pdb.set_trace()
-    for epoch in range(1, num_epoch + 1):
-        start_time = time.clock()
-        h = model.init_hidden(batch_size)
-        avg_loss = 0.
-        counter = 0
-        for x, label in train_loader:
-            counter += 1
-            h = h.data
-            model.zero_grad()
-
-            out, h = model(x.to(config.device).float(), h)
-            loss = criterion(out, label.to(config.device).float())
-            loss.backward()
-            optimizer.step()
-            avg_loss += loss.item()
-            if counter % 200 == 0:
-                print(
-                    "Epoch {}.....Step: {}/{}..... Average Loss for Epoch: {}".
-                    format(epoch, counter, len(train_loader),
-                           avg_loss / counter))
-        current_time = time.clock()
-        print("Epoch {}/{} Done, Total Loss: {}".format(
-            epoch, num_epoch, avg_loss / len(train_loader)))
-        print("Total Time Elapsed: {} seconds".format(
-            str(current_time - start_time)))
-        epoch_times.append(current_time - start_time)
-    print("Total Training Time: {} seconds".format(str(sum(epoch_times))))
-
-    pdb.set_trace()
-
-    model.eval()
-    print("evaluating text classifier...")
-    outputs = []
-    targets = []
-    start_time = time.clock()
-    #  test_loader = DataLoader(TensorDataset(test_data, test_label))
-    for i in test_x.keys():
-        inp = torch.from_numpy(np.array(test_x[i]))
-        lab = torch.from_numpy(np.array(test_y[i]))
-        h = model.init_hidden(inp.shape[0])
-        out, h = model(inp.to(config.device).float(), h)
-        sm = nn.Softmax(out.cpu().detach.numpy())
-        pdb.set_trace()
-        outputs.append()
-
-        target.append(test_label[i].cpu().detach.numpy())
-    print("Evaluation Time: {}".format(str(time.clock() - start_time)))
-    #  for i in range(len(outputs)):
-
-    return model
-    #  model = Text_GRUNet(input_dim=input_siz)
-
-
-# for image dataset
-#  def CNN_classifier(train_data, train_cluster, n_epochs, lr):
-
-#  check if the data is RGB or gray_scale
+    def predict(self, x):
+        dataloader = DataLoader(x, batch_size=128)
+        predicted = []
+        with torch.no_grad():
+            for _, image in enumerate(dataloader):
+                out = super(ResNet_Model, self).forward(image)
+                predict_sm = F.softmax(out)
+                predict_sm = predict_sm.detach().cpu().numpy()
+                for i in range(len(predict_sm)):
+                    predicted.append(
+                        np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+                #  predicted.append(np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
+        return predicted

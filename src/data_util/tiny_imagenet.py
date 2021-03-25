@@ -61,16 +61,24 @@ def tiny_imagenet_dataset(directory='../data'):
     train_path = os.path.join(directory, 'tiny-imagenet-200/train')
     test_path = os.path.join(directory, 'tiny-imagenet-200/val')
 
-    #  animal = [5, 8, 9, 32, 34, 38, 64, 66]
-    #  insect = [13, 19, 28, 30, 31, 92, 123, 164]
-    #  instruments = [1, 2, 16, 17, 18, 21, 24, 61]
-    #  structure = [4, 41, 48, 58, 65, 69, 70, 96]
-    #  transportation = [0, 22, 23, 26, 46, 47, 156, 169]
+    train_classes = []
+    with open(os.path.join(directory, 'tiny-imagenet-200/tiny_imagenet_classes.txt'), 'r') as f:
+        item = f.read()
+        train_classes = item.split('\n')[:-1]
+
     animal = [66, 90, 134, 139, 148, 180, 182, 191]
-    insect = [13, 31, 92, 123, 165, 177, 196, 199]
+    insect = [13, 31, 92, 123, 164, 177, 196, 199]
     instruments = [16, 17, 18, 72, 74, 116, 128, 197]
     structure = [48, 58, 69, 96, 122, 151, 157, 178]
     transportation = [0, 22, 23, 26, 46, 47, 156, 169]
+    total_index = animal + insect + instruments + structure + transportation
+
+    animal = change_index(train_classes, animal)
+    insect = change_index(train_classes, insect)
+    instruments = change_index(train_classes, instruments)
+    structure = change_index(train_classes, structure)
+    transportation = change_index(train_classes, transportation)
+
     total = animal + insect + instruments + structure + transportation
     scenario_classes = (animal, insect, instruments, structure, transportation)
     total.sort()
@@ -121,9 +129,9 @@ def select_from_data(data_path, selected_list):
 
     paths = glob.glob(os.path.join(data_path, '*'))
     os.makedirs(selected_path)
-    for i, path in enumerate(paths):
-        if (i in selected_list):
-            file = path.split('/')[-1]
+    for path in paths:
+        file = path.split('/')[-1]
+        if (file in selected_list):
             dest = os.path.join(selected_path, file)
             copytree(path, dest)
 
@@ -153,3 +161,12 @@ def test_dataset_labeling(test_path):
 
     os.remove(os.path.join(test_path, 'val_annotations.txt'))
     os.rmdir(os.path.join(test_path, 'images'))
+
+
+def change_index(classes, indexes):
+
+    class_indexes = []
+    for i in indexes:
+        class_indexes.append(classes[i])
+
+    return class_indexes

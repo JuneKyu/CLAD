@@ -32,15 +32,12 @@ if torch.cuda.is_available():
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
-#  device = torch.device("cpu")
-#
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # -------------------------------
 # logger configuration
 # -------------------------------
-
 logger = logging.getLogger('log')
 logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
@@ -49,6 +46,7 @@ today = '%s-%s-%s' % (now.year, now.month, now.day)
 current_time = '%s-%s-%s' % (now.hour, now.minute, now.second)
 log_path = os.path.join(cwd, '../../log/' + today)
 sub_log_path = os.path.join(log_path, current_time)
+
 # -------------------------------
 # implementation configuration
 # -------------------------------
@@ -57,14 +55,15 @@ text_datasets = ('cola', 'reuters')
 image_datasets = ('mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
 rgb_datasets = ('gtsrb', 'cifar10', 'tiny_imagenet')
 
-implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
+implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'gtsrb', 'cifar10',
+                        'tiny_imagenet')
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
 implemented_nlp_embeddings = ('avg_bert', 's_bert')
 # embeddings to implement = 'avg_glove'
 implemented_cluster_models = ('dec', 'cvae_base', 'cvae_large', 'cvae_temp')
 
 implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn',
-                                 'cnn_large')
+                                 'cnn_large', 'resnet')
 # need to implement more...
 
 # -------------------------------
@@ -98,65 +97,26 @@ load_cluster_model = False
 cluster_model_path = os.path.join(cwd, '../../cluster_model_ckp')
 # cluster specific configuration
 
-# gaussian mixture model
-gmm_type = 'tied'
 
-#
-""" deep embedding clustering """
+""" clustering """
 plot_clustering = False
 
 #  default clustering
-cluster_type = 'dec'
+cluster_type = 'cvae'
 
 # temp dir for debugging
-#  temp_dec_cluster = "/home/junekyu/hdd/temp_dec/"
-#  temp_dec_cluster = os.path.join(cwd, "../../data/temp_dec/")
 plot_path = os.path.join(sub_log_path, "clustering_plot")
 
 cluster_num = 10
-#  dec_batch_size = 128
-dec_batch_size = 512
+cluster_model_batch_size = 512
 n_hidden_features = 10
 
 # pretrain
-dec_pretrain_epochs = 300
-dec_pretrain_lr = 0.1
-dec_pretrain_momentum = 0.9
-#  dec_pretrain_decay_step = 100
-# dec_pretrain_decay_rate = 0.1
-
+cluster_model_pretrain_epochs = 300
+cluster_model_pretrain_lr = 0.1
 # finetune
-
-# dec training stage
-dec_pretrain_epochs = 100
-dec_pretrain_lr = 0.01
-dec_train_epochs = 100
-dec_train_lr = 0.01
-#  dec_train_momentum = 0.9
-
-# reuters
-#  reuters_dec_finetune_epochs = 800
-#  reuters_dec_finetune_lr = 0.3
-#  reuters_dec_finetune_decay_step = 200
-#  reuters_dec_finetune_decay_rate = 0.5
-#  reuters_dec_train_epochs = 1000
-
-# swat
-#  swat_dec_pretrain_epochs = 200
-#  swat_dec_lr = 1e-2
-#  swat_dec_lr_train = 1e-2
-#  swat_dec_momentum = 0.6
-#  swat_dec_momentum_train = 0.9
-
-# cifar10
-#  cifar10_dec_pretrain_epochs = 200
-#  cifar10_dec_finetune_epochs = 1200
-#  cifar10_dec_finetune_lr = 0.03  # 0.1 is default
-#  cifar10_dec_finetune_momentum = 0.6  # 0.9 is default
-#  cifar10_dec_finetune_decay_step = 400
-#  cifar10_dec_finetune_decay_rate = 0.5
-#  cifar10_dec_train_epochs = 500
-#  cifar10_dec_train_lr = 0.001
+cluster_model_train_epochs = 100
+cluster_model_train_lr = 0.01
 
 # cvae + dec_clustering
 cvae_channel = 1
@@ -179,13 +139,8 @@ load_classifier_model = False
 classifier_model_path = os.path.join(cwd, '../../classifier_model_ckp')
 
 #  default classifier type
-classifier = 'linear'
+classifier_type = 'resnet'
 #  implemented_classifiers = ('knn', 'svm', 'linear', 'fc3', 'cnn')
-
-svm_gamma = 0.1
-svm_C = 1000
-
-knn_n_neighbors = 10
 
 # text classifier (2-layer GRU)
 text_classifier_input_size = 256  # need to be fixed
@@ -231,6 +186,12 @@ is_rgb = False
 #  cnn_large_classifier_epochs = 100
 #  cnn_large_classifier_lr = 0.0001
 #
+""" resnet """
+resnet_classifier_batch_size = 128
+resnet_classifier_epochs = 100
+resnet_classifier_lr = 0.001
+
+#  resnet_
 
 # -------------------------------
 # ood detector configuration

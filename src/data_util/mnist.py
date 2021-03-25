@@ -19,7 +19,7 @@ class MNIST_Dataset(object):
         self.train, self.test = mnist_dataset(root_dir)
 
         self.train_x = None
-        #  self.train_y = None
+        self.train_y = None
         self.test_in_x = None
         #  self.test_in_y = None
         self.test_out_x = None
