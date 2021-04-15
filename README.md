@@ -1,28 +1,22 @@
-# etri 2019
-
-dataset list : swat, wadi, reuter, 20 news groups, imdb, cola
-
-cola : 
-
-reuters :
-original set - train 7769 / test 3019 - after droping outlier classes -> train 5823 / test 2319
-processed set - train 5240 / val 583 / test 2319 
+# CLAD: Confidence-based self-Labeling Anomaly Detection
 
 
-embedding for nlp :
-baseline - mean of glove
-sentence vector extraction + elmo
-sentence bert
+This is a [PyTorch](http://pytorch.org) implementation for \<What is Wrong with One-Class Anomaly Detection?\>
 
-clustering : 
-GMM
-DEC
-subspace embedding
+<p align="center">
+<!-- <img src="./figures/" width="500"> -->
+</p>
 
-out of distribution detection :
-ood detection
-odin
+## Scenario
 
-inner anomaly detection :
-noisy labeling
+## CLAD
+
+## Experimental Results
+
+## Categorizing Each Dataset
+
+### Run scripts
+
+dataset list : MNIST, GTSRB, CIFAR-10, Tiny-ImageNet
+
 
