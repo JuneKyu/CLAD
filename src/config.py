@@ -50,39 +50,18 @@ sub_log_path = os.path.join(log_path, current_time)
 # -------------------------------
 # implementation configuration
 # -------------------------------
-cps_datasets = ('swat')
-text_datasets = ('cola', 'reuters')
 image_datasets = ('mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
 rgb_datasets = ('gtsrb', 'cifar10', 'tiny_imagenet')
 
-implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'gtsrb', 'cifar10',
-                        'tiny_imagenet')
-# dataset to implement = 'wadi', 'newsgroups', 'imdb'
-implemented_nlp_embeddings = ('avg_bert', 's_bert')
-# embeddings to implement = 'avg_glove'
+implemented_datasets = ('mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
 implemented_cluster_models = ('dec', 'cvae', 'cvae_large', 'cvae_temp')
 
 implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn',
                                  'cnn_large', 'resnet')
-# need to implement more...
 
 # -------------------------------
 # data configuration
 # -------------------------------
-
-# cpr data specific comfiguration : (swat, wadi)
-read_size = 5
-window_size = 30
-swat_selected_list = [
-    'P1_LIT101', 'P1_MV101', 'P1_P101', 'P2_P203', 'P3_DPIT301', 'P3_LIT301',
-    'P3_MV301', 'P4_LIT401', 'P5_AIT503'
-]
-swat_raw_selected_dim = [0, 1, 2, 38, 39, 40]
-swat_freq_selected_dim = [0, 1, 31, 32]
-
-# nlp data specific configuration
-embedding = 's_bert'  # default
-# avg_glove, avg_bert, s_bert,...
 
 normal_class_index_list = [0]
 # reuters, mnist congigured
@@ -123,11 +102,6 @@ cvae_kernel_size = 3
 cvae_height = 28
 cvae_width = 28
 
-# meanshift clustering
-
-ms_quantile = 0.2
-ms_n_samples = 500
-
 # -------------------------------
 # classifier configuration
 # -------------------------------
@@ -140,41 +114,15 @@ classifier_model_path = os.path.join(cwd, '../../classifier_model_ckp')
 classifier_type = 'resnet'
 #  implemented_classifiers = ('knn', 'svm', 'linear', 'fc3', 'cnn')
 
-# text classifier (2-layer GRU)
-text_classifier_input_size = 256  # need to be fixed
-text_classifier_hidden_size = 256
-text_classifier_output_size = 256
-text_classifier_lr = 0.001
-text_classifier_epoch = 10
-
-text_classifier_batch_size = 1024
-
 classifier_epochs = 200
 classifier_lr = 0
 """ linear """
-# for swat
 linear_classifier_epochs = 5000
 linear_classifier_lr = 0.0001
-# for mnist
-#  linear_classifier_epochs = 200
-#  linear_classifier_lr = 0.0001
-# for cifar10
-#  linear_classifier_epochs = 5000
-#  linear_classifier_lr = 0.001
 """ fc3 """
-# mnist
-#  fc3_classifier_epochs = 100
-#  fc3_classifier_lr = 0.00001
-#  for cifar10
 fc3_classifier_epochs = 1000
 fc3_classifier_lr = 0.001
 """ cnn """
-# for mnist
-#  cnn_classifier_batch_size = 100
-#  cnn_classifier_epochs = 100
-#  cnn_classifier_lr = 0.00001
-#  is_rgb = False
-# for cifar10
 cnn_classifier_batch_size = 128
 cnn_classifier_epochs = 100
 cnn_classifier_lr = 0.00001
@@ -188,8 +136,6 @@ is_rgb = False
 resnet_classifier_batch_size = 128
 resnet_classifier_epochs = 100
 resnet_classifier_lr = 0.001
-
-#  resnet_
 
 # -------------------------------
 # ood detector configuration
@@ -207,4 +153,3 @@ odin_out_path = os.path.join(sf_scores_path, 'confidence_Odin_Out.txt')
 #  odin_perturbation_magnitude = 0.0012  # perturbation
 temperature = 1000
 perturbation = 0.1
-# odin with temper 10, perturbation 0.12 : odin 0.9980 , base 0.4313
