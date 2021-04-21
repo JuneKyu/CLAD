@@ -5,6 +5,7 @@ This is a [PyTorch](http://pytorch.org) implementation for [\<What is Wrong with
 
 ## Citation
 ```
+(not provided yet)
 ```
 
 ## Abstract
@@ -29,7 +30,7 @@ This is a [PyTorch](http://pytorch.org) implementation for [\<What is Wrong with
 
 To install all the required elements, run the code:
 ```
-pip install -r requirements.txt
+bash requirements.txt
 ```
 
 ### Run scripts
