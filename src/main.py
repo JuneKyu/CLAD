@@ -36,16 +36,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='../data')
     parser.add_argument('--dataset_name', type=str, default='mnist')
-    parser.add_argument('--sentence_embedding',
-                        type=str,
-                        default='sentence_embedding')
     parser.add_argument('--normal_class_index_list', nargs='+',
                         default=[0])  # get a list of normal class indexes
+    parser.add_argument('--cluster_type', type=str, default='cvae')
     parser.add_argument('--cluster_num', type=int, default=5)
     parser.add_argument('--n_hidden_features', type=int, default=10)
-    parser.add_argument('--cluster_type', type=str, default='cvae')
-    parser.add_argument('--cluster_model_pretrain_epochs', type=int, default=100)
-    parser.add_argument('--cluster_model_pretrain_lr', type=float, default=0.01)
+    parser.add_argument('--cluster_model_pretrain_epochs',
+                        type=int,
+                        default=100)
+    parser.add_argument('--cluster_model_pretrain_lr',
+                        type=float,
+                        default=0.01)
     parser.add_argument('--cluster_model_train_epochs', type=int, default=100)
     parser.add_argument('--cluster_model_train_lr', type=float, default=0.01)
     parser.add_argument('--save_cluster_model', type=str2bool, default=False)
@@ -53,15 +54,15 @@ def main():
     parser.add_argument('--classifier_type', type=str, default='resnet')
     parser.add_argument('--classifier_epochs', type=int, default=200)
     parser.add_argument('--classifier_lr', type=float, default=0.01)
+    parser.add_argument('--temperature', type=float, default=1000)
+    parser.add_argument('--perturbation', type=float, default=0.001)
+    parser.add_argument('--plot_clustering', type=str2bool, default=False)
     parser.add_argument('--save_classifier_model',
                         type=str2bool,
                         default=False)
     parser.add_argument('--load_classifier_model',
                         type=str2bool,
                         default=False)
-    parser.add_argument('--temperature', type=float, default=1000)
-    parser.add_argument('--perturbation', type=float, default=0.001)
-    parser.add_argument('--plot_clustering', type=str2bool, default=False)
 
     args = parser.parse_args()
 
@@ -71,8 +72,6 @@ def main():
     if (dataset_name in config.rgb_datasets):
         config.is_rgb = True
         config.cvae_channel = 3
-    # if text data, set sentence embedding
-    config.sentence_embeddingm = args.sentence_embedding
     normal_class_index_list = args.normal_class_index_list
     normal_class_index_list = [int(i) for i in normal_class_index_list]
     config.normal_class_index_list = normal_class_index_list

@@ -60,7 +60,7 @@ implemented_datasets = ('swat', 'cola', 'reuters', 'mnist', 'gtsrb', 'cifar10',
 # dataset to implement = 'wadi', 'newsgroups', 'imdb'
 implemented_nlp_embeddings = ('avg_bert', 's_bert')
 # embeddings to implement = 'avg_glove'
-implemented_cluster_models = ('dec', 'cvae_base', 'cvae_large', 'cvae_temp')
+implemented_cluster_models = ('dec', 'cvae', 'cvae_large', 'cvae_temp')
 
 implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn',
                                  'cnn_large', 'resnet')
@@ -96,8 +96,6 @@ save_cluster_model = False
 load_cluster_model = False
 cluster_model_path = os.path.join(cwd, '../../cluster_model_ckp')
 # cluster specific configuration
-
-
 """ clustering """
 plot_clustering = False
 

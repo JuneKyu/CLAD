@@ -9,9 +9,14 @@ This is a [PyTorch](http://pytorch.org) implementation for \<What is Wrong with 
 
 ## Scenario
 
+latent class-condition anomaly detection scenario
+
+
 ## CLAD
 
 ## Experimental Results
+
+(clustering : [link] + ~ used multi-core tsne)
 
 ## Categorizing Each Dataset
 
