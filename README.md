@@ -123,5 +123,12 @@ For the scaling the confidence scores, we adopted the OOD mechanism from the [OD
 
 ## Citation
 ```
-(not provided yet)
+@misc{park2021wrong,
+  title         = {What is Wrong with One-Class Anomaly Detection?}, 
+  author        = {JuneKyu Park and Jeong-Hyeon Moon and Namhyuk Ahn and Kyung-Ah Sohn},
+  year          = {2021},
+  eprint        = {2104.09793},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG}
+}
 ```
