@@ -3,10 +3,6 @@
 
 This is a [PyTorch](http://pytorch.org) implementation for [\<What is Wrong with One-Class Anomaly Detection?\>](https://arxiv.org/abs/2104.09793) published at ICLR 2021 Workship on Security and Safety in Machine Learning Systems.
 
-## Citation
-```
-(not provided yet)
-```
 
 ## Abstract
 
@@ -88,7 +84,7 @@ We devised super-categories by merging the semantic labels to simulate our AD sc
 </p>
 
 <p align="center">
-<img src="./figures/table_scenario.png" width="1000">
+<img src="./figures/table_dataset_scenario.png" width="1000">
 </p>
 
 
@@ -109,7 +105,7 @@ We compare with one-class AD methods: [OCSVM](https://direct.mit.edu/neco/articl
 <img src="./figures/table_ablation_one_class.png" width="1000">
 </p>
 
-### ablation study on hyper-parameters
+### Ablation study on hyper-parameters
 
 <p align="center">
 <img src="./figures/fig_ablation_hyperparameter.png" width="1000">
@@ -123,3 +119,9 @@ For self-labeling via clustering, we mimicked the approach of the [DEC](https://
 For classifier for confidence-based AD, we used [ResNet-18](https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py).
 For the scaling the confidence scores, we adopted the OOD mechanism from the [ODIN](https://github.com/facebookresearch/odin) to gain more robust AD score.
 * Note that the hyper-parameters may vary depending on the scenarios for each dataset.
+
+
+## Citation
+```
+(not provided yet)
+```
