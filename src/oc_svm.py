@@ -55,8 +55,6 @@ def main():
     parser.add_argument('--perturbation', type=float, default=0.001)
     parser.add_argument('--plot_clustering', type=str2bool, default=False)
 
-    #  parser.add_argument('--use_noise_labeling', type=bool, default='True')
-    # dataset_name : 'swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb'
 
     args = parser.parse_args()
 
@@ -121,11 +119,6 @@ def main():
     print("classifier : " + classifier)
     log.info("classifier : " + classifier)
 
-    # data specific parameter configurations
-    #  if (dataset_name in ("swat")) and (cluster_type in ("dec")):
-    #      config.set_dec_lower_learning_rate = True
-
-    #  if (config.dataset_name != '')
     print("normal_class_index_list : {}".format(normal_class_index_list))
     log.info("normal_class_index_list : {}".format(normal_class_index_list))
     print("n_hidden_features : {}".format(n_hidden_features))
@@ -151,8 +144,6 @@ def main():
     print(normal_class_index_list)
 
     cls = OneClassSVM(gamma='auto')
-    # train
-    #  cls.fit(train_x)
 
     train_x_list = []
     for x in train_x:
@@ -185,34 +176,6 @@ def main():
     auroc = auc(fpr,tpr)
     print(auroc)
 
-    #  test_in_pred = cls.predict(test_in)
-    #  test_out_pred = cls.predict(test_out)
-
-
-    #  cls = OneClassSVM(gamma='auto').fit(X)
-
-    #  model = Model(dataset_name=dataset_name,
-    #                dataset=dataset,
-    #                cluster_num=cluster_num,
-    #                cluster_type=cluster_type,
-    #                classifier=classifier)
-
-    #  print("clustering...")
-    #  log.info("clustering...")
-    #  model.cluster()
-    #
-    #  print("classifing...")
-    #  log.info("classifing...")
-    #  #  model.classify_naive()
-    #  model.classify_nn(dataset_name)
-    #
-    #  log.info("-" * 30)
-    #  log.info("-" * 30)
-    #  log.info('FINISH')
-    #  log.info('%s:%s:%s' %
-    #           (datetime.datetime.now().hour, datetime.datetime.now().minute,
-    #            datetime.datetime.now().second))
-    #
 
 if __name__ == "__main__":
     main()

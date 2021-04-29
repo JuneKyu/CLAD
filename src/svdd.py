@@ -58,8 +58,6 @@ def main():
     parser.add_argument('--plot_clustering', type=str2bool, default=False)
     parser.add_argument('--width_factor', type=float, default=80)
 
-    #  parser.add_argument('--use_noise_labeling', type=bool, default='True')
-    # dataset_name : 'swat', 'wadi', 'cola', 'reuters', 'newsgroups', 'imdb'
 
     args = parser.parse_args()
 
@@ -109,34 +107,11 @@ def main():
     fileHandler.setFormatter(config.formatter)
     config.logger.addHandler(fileHandler)
 
-    #  log.info("-" * 99)
-    #  log.info("-" * 10 + str(args) + "-" * 10)
-    #  log.info("-" * 99)
-    #  log.info('START %s:%s:%s\n' %
-    #           (datetime.datetime.now().hour, datetime.datetime.now().minute,
-    #            datetime.datetime.now().second))
-    #  log.info('%s:%s:%s\n' %
-    #           (datetime.datetime.now().hour, datetime.datetime.now().minute,
-    #            datetime.datetime.now().second))
 
     print("dataset name : " + dataset_name)
     log.info("dataset name : " + dataset_name)
-    #  print("classifier : " + classifier)
-    #  log.info("classifier : " + classifier)
-    #
-    # data specific parameter configurations
-    #  if (dataset_name in ("swat")) and (cluster_type in ("dec")):
-    #      config.set_dec_lower_learning_rate = True
-
-    #  if (config.dataset_name != '')
     print("normal_class_index_list : {}".format(normal_class_index_list))
     log.info("normal_class_index_list : {}".format(normal_class_index_list))
-    #  print("n_hidden_features : {}".format(n_hidden_features))
-    #  log.info("n_hidden_features : {}".format(n_hidden_features))
-    #  print("temperature : {}".format(temperature))
-    #  log.info("temperature : {}".format(temperature))
-    #  print("perturbation : {}".format(perturbation))
-    #  log.info("perturbation : {}".format(perturbation))
 
     # loading dataset
     dataset = load_dataset(dataset_name=dataset_name, data_path=data_path)
@@ -160,9 +135,6 @@ def main():
                   "option": {"display": 'on'}}
 
     svdd = SVDD(parameters)
-    #  cls = OneClassSVM(gamma='auto')
-    # train
-    #  cls.fit(train_x)
 
     train_x_list = []
     for x in train_x:
@@ -181,19 +153,11 @@ def main():
         t_i = t_i.view(-1).numpy()
         test_in_pred.append(t_i)
 
-    #  print("predicting test_in")
-    #  test_in_pred = cls.predict(test_in_pred)
-    #  test_in_pred = cls.score_samples(test_in_pred)
-
     test_out_pred = []
     for t_o in test_out:
         t_o = t_o.view(-1).numpy()
         test_out_pred.append(t_o)
 
-    #  print("predicting test_out")
-    #  test_out_pred = cls.predict(test_out_pred)
-    #  test_out_pred = cls.score_samples(test_out_pred)
-    #  testData = test_in_pred.tolist()+test_out_pred.tolist()
     testData = test_in_pred + test_out_pred
     testLabel = [0 for i in range(len(test_in_pred))] + [1 for i in range(len(test_out_pred))]
 
@@ -201,35 +165,6 @@ def main():
     testLabel = np.array(testLabel)
     distance, accuracy = svdd.test(testData, testLabel)
     print(accuracy)
-
-    #  test_in_pred = cls.predict(test_in)
-    #  test_out_pred = cls.predict(test_out)
-
-
-    #  cls = OneClassSVM(gamma='auto').fit(X)
-
-    #  model = Model(dataset_name=dataset_name,
-    #                dataset=dataset,
-    #                cluster_num=cluster_num,
-    #                cluster_type=cluster_type,
-    #                classifier=classifier)
-
-    #  print("clustering...")
-    #  log.info("clustering...")
-    #  model.cluster()
-    #
-    #  print("classifing...")
-    #  log.info("classifing...")
-    #  #  model.classify_naive()
-    #  model.classify_nn(dataset_name)
-    #
-    #  log.info("-" * 30)
-    #  log.info("-" * 30)
-    #  log.info('FINISH')
-    #  log.info('%s:%s:%s' %
-    #           (datetime.datetime.now().hour, datetime.datetime.now().minute,
-    #            datetime.datetime.now().second))
-    #
 
 if __name__ == "__main__":
     main()

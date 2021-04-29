@@ -14,7 +14,6 @@ from data_util.utils import divide_data_label
 import config
 import pdb
 
-#  from torchvision.datasets import
 
 class TINY_Imagenet_Dataset(object):
     """Docstring for TINY_Imagenet_Dataset. """
@@ -109,7 +108,6 @@ def tiny_imagenet_dataset(directory='../data'):
     tiny_imagenet_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=normal_mean, std=normal_std)
-        #  transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     selected_train_path = select_from_data(train_path, total)
@@ -146,7 +144,6 @@ def test_dataset_labeling(test_path):
             val_dict[split_line[0]] = split_line[1]
 
     paths = glob.glob(os.path.join(test_path, 'images/*'))
-    #  paths[0].split('/')[-1]
     for path in paths:
         file = path.split('/')[-1]
         folder = val_dict[file]

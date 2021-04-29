@@ -54,9 +54,9 @@ image_datasets = ('mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
 rgb_datasets = ('gtsrb', 'cifar10', 'tiny_imagenet')
 
 implemented_datasets = ('mnist', 'gtsrb', 'cifar10', 'tiny_imagenet')
-implemented_cluster_models = ('dec', 'cvae', 'cvae_large', 'cvae_temp')
+implemented_cluster_models = ('dec', 'cvae', 'cvae_large')
 
-implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn',
+implemented_classifier_models = ('linear', 'fc3', 'cnn',
                                  'cnn_large', 'resnet')
 
 # -------------------------------
@@ -64,8 +64,6 @@ implemented_classifier_models = ('knn', 'svm', 'linear', 'fc3', 'cnn',
 # -------------------------------
 
 normal_class_index_list = [0]
-# reuters, mnist congigured
-# need to configure the rest
 
 # -------------------------------
 # clustering configuration
@@ -74,6 +72,7 @@ normal_class_index_list = [0]
 save_cluster_model = False
 load_cluster_model = False
 cluster_model_path = os.path.join(cwd, '../../cluster_model_ckp')
+
 # cluster specific configuration
 """ clustering """
 plot_clustering = False
@@ -112,7 +111,6 @@ classifier_model_path = os.path.join(cwd, '../../classifier_model_ckp')
 
 #  default classifier type
 classifier_type = 'resnet'
-#  implemented_classifiers = ('knn', 'svm', 'linear', 'fc3', 'cnn')
 
 classifier_epochs = 200
 classifier_lr = 0
@@ -131,7 +129,7 @@ is_rgb = False
 #  cnn_large_classifier_batch_size = 100
 #  cnn_large_classifier_epochs = 100
 #  cnn_large_classifier_lr = 0.0001
-#
+
 """ resnet """
 resnet_classifier_batch_size = 128
 resnet_classifier_epochs = 100

@@ -21,9 +21,7 @@ class MNIST_Dataset(object):
         self.train_x = None
         self.train_y = None
         self.test_in_x = None
-        #  self.test_in_y = None
         self.test_out_x = None
-        #  self.test_out_y = None
 
     def get_dataset(self):
         
@@ -73,7 +71,6 @@ def mnist_dataset(directory='../data'):
     mnist_transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(mean=[normal_mean], std=[normal_std])
-        #  transforms.Normalize(mean=[0.1307], std=[0.3081])
     ])
 
     train = MNIST(mnist_data_path,

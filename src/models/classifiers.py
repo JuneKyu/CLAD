@@ -5,20 +5,14 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision.models.resnet import ResNet, BasicBlock
-
 import torch.nn.functional as F
-
-
 import numpy as np
 
 import config
 
-import pdb
-
 # -------------------------
 # Neural-Network-based classifier
 # -------------------------
-
 
 # for linear classifier
 class Linear_Model(nn.Module):
@@ -195,7 +189,6 @@ class CNNLarge_Model(nn.Module):
                 out = self.fc_layer(out)
                 predict_sm = F.softmax(out)
                 predict_sm = predict_sm.detach().cpu().numpy()
-                #  for i in range(len(predict_sm)):
                 predicted.append(np.where(predict_sm == max(predict_sm))[0][0])
         return predicted
     
@@ -230,5 +223,4 @@ class ResNet_Model(ResNet):
                 for i in range(len(predict_sm)):
                     predicted.append(
                         np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
-                #  predicted.append(np.where(predict_sm[i] == max(predict_sm[i]))[0][0])
         return predicted

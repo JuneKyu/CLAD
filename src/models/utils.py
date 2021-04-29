@@ -4,12 +4,10 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-#  from sklearn.manifold import TSNE
 from MulticoreTSNE import MulticoreTSNE as TSNE
 from sklearn.decomposition import PCA
 import config
 
-import pdb
 
 
 def plot_distribution(

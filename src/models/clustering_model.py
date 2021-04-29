@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-
 import torch
 import torch.nn as nn
-
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler
 from torch.optim import SGD, Adam
 import torch.nn.utils as torch_utils
@@ -14,7 +12,6 @@ from sklearn.cluster import KMeans
 from itertools import combinations
 import numpy as np
 from models.utils import plot_distribution
-
 from tqdm import tqdm
 
 import pdb
@@ -31,7 +28,6 @@ log = config.logger
 
 
 def set_image_data(train_x, train_y, batch_size=32):
-
     num_data = train_x.shape[0]
     channel_size = train_x.shape[1]
     height = train_x.shape[2]
@@ -42,7 +38,6 @@ def set_image_data(train_x, train_y, batch_size=32):
 
 
 def set_cps_data(train_x, train_y, batch_size=32):
-
     num_data = train_x.shape[0]
     data = TensorDataset(train_x, train_y)
     dataloader = DataLoader(data, batch_size=batch_size)
@@ -150,7 +145,6 @@ class Clustering_Module():
                 pred_y=y_pred)
 
     def pretrain(self, epochs):
-
         self.encoder.to(config.device)
         self.decoder.to(config.device)
         #  gradient clipping
@@ -161,14 +155,6 @@ class Clustering_Module():
         loss_function = nn.MSELoss()
 
         if (self.cluster_type == 'linear'):
-            #  optimizer_enc = SGD(params=self.encoder.parameters(),
-            #                      lr=0.01,
-            #                      momentum=0.9)
-            #  optimizer_dec = SGD(params=self.decoder.parameters(),
-            #                      lr=0.01,
-            #                      momentum=0.9)
-
-            # testing for swat
             optimizer_enc = SGD(params=self.encoder.parameters(),
                                 lr=config.clustering_model_pretrain_lr,
                                 momentum=0.9)
@@ -486,32 +472,6 @@ class Encoder(nn.Module):
                 #  nn.ELU(),
                 nn.ReLU(),
                 nn.Linear(512, self.n_hidden_features * 2))
-        #  elif (cluster_type == 'cvae_temp'):
-        #      self.dropout = nn.Dropout(p=0.1)
-        #      self.encoder_net = nn.Sequential(
-        #          nn.Conv2d(in_channels=self.channels,
-        #                    out_channels=self.channels * 32,
-        #                    kernel_size=self.ksize,
-        #                    stride=1,
-        #                    padding=self.ksize // 2), nn.ReLU(), nn.MaxPool2d(2),
-        #          nn.Conv2d(in_channels=self.channels * 32,
-        #                    out_channels=self.channels * 64,
-        #                    kernel_size=self.ksize,
-        #                    stride=1,
-        #                    padding=self.ksize // 2), nn.ReLU(), nn.MaxPool2d(2),
-        #          nn.Conv2d(in_channels=self.channels * 64,
-        #                    out_channels=self.channels * 128,
-        #                    kernel_size=self.ksize,
-        #                    stride=1,
-        #                    padding=self.ksize // 2), nn.ReLU(), nn.MaxPool2d(2),
-        #          nn.Conv2d(in_channels=self.channels * 128,
-        #                    out_channels=self.channels * 256,
-        #                    kernel_size=self.ksize,
-        #                    stride=1,
-        #                    padding=self.ksize // 2), nn.ReLU(), Flatten(),
-        #          nn.Linear((self.height // (2**3)) * (self.width // (2**3)) *
-        #                    self.channels * 256, 512), nn.ReLU(),
-        #          nn.Linear(512, self.n_hidden_features * 2))
 
     def split_z(self, z):
         z_mu = z[:, :self.n_hidden_features]
@@ -651,40 +611,6 @@ class Decoder(nn.Module):
                           padding=self.ksize // 2),
                 nn.Sigmoid(),
             )
-        #  elif (cluster_type == 'cvae_temp'):
-        #      self.decoder_dense = nn.Sequential(
-        #          nn.Linear(self.n_hidden_features, 512),
-        #          nn.ReLU(),
-        #          nn.Linear(512, (self.height // (2**3)) *
-        #                    (self.width // (2**3)) * self.channels * 256),
-        #          nn.ReLU(),
-        #      )
-        #      self.decoder_net = nn.Sequential(
-        #          nn.ConvTranspose2d(in_channels=self.channels * 256,
-        #                             out_channels=self.channels * 128,
-        #                             kernel_size=self.ksize + 1,
-        #                             stride=2,
-        #                             padding=1),
-        #          nn.ReLU(),
-        #          nn.ConvTranspose2d(in_channels=self.channels * 128,
-        #                             out_channels=self.channels * 64,
-        #                             kernel_size=self.ksize + 1,
-        #                             stride=2,
-        #                             padding=1),
-        #          nn.ReLU(),
-        #          nn.ConvTranspose2d(in_channels=self.channels * 64,
-        #                             out_channels=self.channels * 32,
-        #                             kernel_size=self.ksize + 1,
-        #                             stride=2,
-        #                             padding=1),
-        #          nn.ReLU(),
-        #          nn.Conv2d(in_channels=self.channels * 32,
-        #                    out_channels=self.channels,
-        #                    kernel_size=self.ksize,
-        #                    stride=1,
-        #                    padding=self.ksize // 2),
-        #          nn.Sigmoid(),
-        #      )
 
     def forward(self, x):
         if (self.cluster_type == 'linear'):
@@ -699,11 +625,6 @@ class Decoder(nn.Module):
             out = out.reshape(out.size(0), self.channels * 64,
                               (self.height // (2**2)), (self.width // (2**2)))
             out = self.decoder_net(out)
-        #  elif (self.cluster_type == 'cvae_temp'):
-        #      out = self.decoder_dense(x)
-        #      out = out.reshape(out.size(0), self.channels * 256,
-        #                        (self.height // (2**3)), (self.width // (2**3)))
-        #      out = self.decoder_net(out)
         if (self.dataset_name in config.cps_datasets):
             # 10 is the size of unit of freq_data from swat
             # 1280 -> 128*10
@@ -730,11 +651,6 @@ class Decoder(nn.Module):
                                   (self.height // (2**2)),
                                   (self.width // (2**2)))
                 out = self.decoder_net(out)
-            #  elif (self.cluter_type == 'cvae_temp'):
-            #      out = self.decoder_dense(x)
-            #      out = out.reshape(out.size(0), self.channels * 256,
-            #                        (self.height // (2**3)),
-            #                        (self.width // (2**3)))
         out = out.reshape(-1, self.channels, self.height, self.width)
         return out
 

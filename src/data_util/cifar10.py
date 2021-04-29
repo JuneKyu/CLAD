@@ -13,8 +13,6 @@ class CIFAR10_Dataset(object):
     """Docstring for CIFAR10_Dataset. """
     def __init__(self, root_dir: str):
 
-        #  self.dec_train, self.dec_test, self.train, self.test = cifar10_dataset(
-        #      root_dir)
         self.train, self.test = cifar10_dataset(root_dir)
         self.train_x = None
         self.test_in_x = None
@@ -78,10 +76,6 @@ def cifar10_dataset(directory='../data'):
     cifar10_data_path = directory
     cifar_transform = transforms.Compose([
         transforms.ToTensor(),
-        #  transforms.Normalize(mean=[123.3 / 255, 123.0 / 255, 113.9 / 255],
-        #                       std=[63.0 / 255, 62.1 / 255, 66.7 / 255.0])
-        #  transforms.Normalize(mean=[0.4914, 0.4822, 0.4465],
-        #                       std=[0.247, 0.243, 0.261])
         transforms.Normalize(mean=normal_mean, std=normal_std)
     ])
 

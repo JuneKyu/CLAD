@@ -13,13 +13,6 @@ def divide_data_label(dataset, train=False):
         data_x = _d[0].numpy()
         data_y = _d[1]
 
-        #  if (data_y in config.normal_class_index_list):
-        #      in_data.append(data_x)
-        #      in_labels.append(0)
-        #  else:
-        #      in_data.append(data_x)
-        #      in_labels.append(1)
-
         if (data_y in config.normal_class_index_list):
             in_data.append(data_x)
             in_labels.append(data_y)
